@@ -1,0 +1,255 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+앱의 아키텍처는 클린 아키텍처 기반 MVVM + MVI 구조입니다.
+
+lib/
+├── app/                             # 앱 전역 설정
+│   ├── routing/                     # 라우팅 설정
+│   ├── external/                    # 외부 모듈 DI 등
+│   ├── di/
+│   │   └── app_di.dart              # 앱 DI 설정
+│   ├── firebase/
+│   │   ├── firebase_config.dart     # Firebase 초기화
+│   │   ├── analytics_service.dart   # Analytics 서비스
+│   │   ├── crashlytics_service.dart # Crashlytics 서비스
+│   │   └── app_fcm.dart             # FCM 서비스
+│   └── theme/
+│       └── app_theme.dart           # 전역 테마 설정
+│
+├── core/                            # 앱 공통 모듈
+│   ├── config/                      # 앱 설정값 관리
+│   ├── modules/                     # 테마, 언어 등 설정 모듈
+│   ├── constants/
+│   │   ├── app_constants.dart
+│   │   ├── storage_keys.dart
+│   │   ├── app_color.dart
+│   │   ├── app_text_style.dart
+│   │   ├── app_image.dart
+│   │   └── app_video.dart
+│   ├── utils/                       # 유틸 함수
+│   ├── extensions/                  # 확장 함수
+│   ├── errors/
+│   │   ├── result.dart
+│   │   └── app_error.dart
+│   └── services/
+│       ├── network/
+│       │   ├── dio_client.dart
+│       │   └── api_interceptor.dart
+│       ├── storage/
+│       └── notification/
+│
+├── features/                        # 비즈니스 기능 단위
+│   ├── shared/
+│   │   ├── widgets/                 # 공용 위젯
+│   │   └── layout/                  # 공용 레이아웃
+│   └── feature/                     # 기능별 폴더 예시
+│       ├── data/
+│       │   ├── datasources/
+│       │   │   ├── feature_remote_datasource.dart
+│       │   │   ├── feature_remote_datasource_impl.dart
+│       │   │   ├── feature_local_datasource.dart
+│       │   │   └── feature_local_datasource_impl.dart
+│       │   ├── models/              # 데이터 모델
+│       │   └── repository_impl/
+│       │       └── feature_repository_impl.dart
+│       ├── domain/
+│       │   ├── entities/            # 도메인 모델
+│       │   ├── repositories/        # 계약
+│       │   └── usecases/            # 유스케이스
+│       └── presentation/
+│           ├── pages/
+│           │   ├── feature_page_root.dart
+│           │   └── feature_page.dart
+│           ├── widgets/             # UI 구성
+│           └── controller/
+│               ├── feature_action.dart
+│               ├── feature_provider.dart
+│               └── feature_state.dart
+│
+├── provider/                        # 앱 전체 Provider 설정
+│   └── feature_provider.dart
+│
+└── main.dart                        # 앱 진입점
+
+
+lib/
+app/
+routing/
+
+앱 레벨 설정: 전체 앱의 초기화 및 설정 관리
+
+external/
+
+라우팅 설정: 앱 전체 네비게이션 설정
+
+di/
+
+외부 주입 정의: 전체 앱의 DI 설정
+
+app_di.dart: 앱 DI 컨테이너
+
+firebase/
+
+Firebase 설정 및 초기화 관련
+
+firebase_config.dart: Firebase 서비스 초기화
+
+analytics_service.dart: Firebase Analytics 서비스
+
+crashlytics_service.dart: Firebase Crashlytics 서비스
+
+app_fcm.dart: Firebase FCM 서비스
+
+theme/
+
+앱의 전역 테마 설정
+
+app_theme.dart: MaterialApp 및 전역 Provider 설정
+
+core/
+config/
+
+전역 공통 기능: 모든 feature에서 사용되는 기본 기능
+
+modules/
+
+설정 및 공통 설정값: 언어, 테마, 다국어 등
+
+constants/
+
+앱 상수: 전체에서 사용되는 상수값들
+
+app_constants.dart: 앱 관련 상수 (버전, 설정값 등)
+
+storage_keys.dart: SharedPreferences, SecureStorage 키
+
+app_color.dart: 전체 색상 정의
+
+app_text_style.dart: 전체 텍스트 스타일 정의
+
+app_image.dart: 이미지 상수 정의
+
+app_video.dart: 비디오 상수 정의
+
+utils/
+
+유틸리티 함수 모음
+
+extensions/
+
+확장 함수들: 기존 클래스에 새로 기능 추가
+
+errors/
+
+예외 정의 및 공통 예외 처리
+
+result.dart: Result<T> 패턴 구현 (성공/실패 처리)
+
+app_error.dart: 앱 예외 정의
+
+services/
+
+전역 서비스: 전체에서 사용되는 핵심 서비스
+
+network/
+
+네트워크 서비스: HTTP 클라이언트 설정
+
+dio_client.dart: Dio 기반 클라이언트 정의
+
+api_interceptor.dart: API 요청/응답 인터셉터 (인증, 로깅 등)
+
+storage/
+
+스토리지 서비스: 로컬 저장소, 토큰 관리, SharedPreferences
+
+notification/
+
+Notification 관련 기능
+
+features/
+비즈니스 기능별로 독립적인 모듈 구조
+
+shared/
+
+widgets/: 공통으로 사용하는 위젯
+
+layout/: 공통으로 사용하는 layout
+
+feature/
+
+하나의 비즈니스 기능 단위 (예: 사용자 기능 등)
+
+data/
+
+기능에 필요한 모든 로직 포함
+
+datasources/
+
+외부 데이터 소스와의 연결
+
+feature_remote_datasource.dart: 원격 데이터 소스 인터페이스
+
+feature_remote_datasource_impl.dart: 원격 데이터 소스 구현체
+
+feature_local_datasource.dart: 로컬 데이터 소스 인터페이스
+
+feature_local_datasource_impl.dart: 로컬 데이터 소스 구현체
+
+models/
+
+API 응답 모델 → 내부 모델 변환
+
+repository_impl/
+
+feature_repository_impl.dart: Repository 구현체
+
+domain/
+
+비즈니스 핵심 로직
+
+entities/: 도메인 엔터티
+
+repositories/: 데이터 접근 계약
+
+usecases/: 유스케이스 정의 (비즈니스 로직)
+
+presentation/
+
+실제 화면 구현
+
+pages/
+
+feature_page_root.dart: 루트 페이지 (상태 연결 및 의존성 처리)
+
+feature_page.dart: 상태별 UI 처리
+
+widgets/: 상단 UI 구성 등
+
+controller/
+
+feature_action.dart: 상태에 대한 사용자 요청 정의
+
+feature_provider.dart: Provider 설정
+
+feature_state.dart: 상태 정의
+
+provider/
+전역 Provider: 앱 전체에서 사용하는 상태 관리
+
+feature_provider.dart: 전역 Feature Provider
+
+main.dart
+앱 진입점: 앱 시작 및 초기화
+
+iOS와 Android를 배포할겁니다.
+
+현재 진행하는 프로젝트는 일기 앱 입니다.
+회원가입하기 전에는 sqlite3를 이용하여 사용자가 기기 내부에 데이터를 저장합니다.
+flutter 개발 고수입니다. 개발 시 메모리 및 최적화 기법은 항상 생각하며 구현합니다.
+C-level입장에서 항상 생각하며 개발을 진행합니다.
+
+당신은 네이티브 앱을 잘 구현합니다.
