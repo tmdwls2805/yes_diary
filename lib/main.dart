@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yes_diary/screens/splash_screen.dart';
-import 'package:yes_diary/screens/onboarding_screen.dart';
-import 'package:yes_diary/screens/main_screen.dart';
+import 'package:yes_diary/app/pages/splash_screen.dart';
+import 'package:yes_diary/app/pages/onboarding_screen.dart';
+import 'package:yes_diary/features/diary/presentation/pages/diary_main_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
       home: SplashScreen(),
       routes: {
         '/onboarding': (context) => OnboardingScreen(),
-        '/main': (context) => MainScreen(),
+        '/main': (context) => DiaryMainPage(),
       },
     );
   }

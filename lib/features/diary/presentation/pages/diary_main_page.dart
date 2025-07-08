@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 // import 'package:table_calendar/table_calendar.dart'; // table_calendar 패키지 import
 import 'package:intl/intl.dart'; // DateFormat을 사용하기 위해 import 추가
-import 'package:yes_diary/widgets/custom_calendar.dart'; // CustomCalendar import
+import 'package:yes_diary/features/diary/presentation/widgets/calendar_widget.dart'; // CustomCalendar import
 
-class MainScreen extends StatefulWidget { // StatelessWidget을 StatefulWidget으로 변경
+class DiaryMainPage extends StatefulWidget { // StatelessWidget을 StatefulWidget으로 변경
   @override
-  _MainScreenState createState() {
-    return _MainScreenState();
+  _DiaryMainPageState createState() {
+    return _DiaryMainPageState();
   }
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _DiaryMainPageState extends State<DiaryMainPage> {
   DateTime _focusedDay = DateTime.now(); // 현재 포커스된 달 (기본값: 현재 날짜)
   DateTime? _selectedDay; // 사용자가 선택한 날짜 (초기값: 없음)
 
