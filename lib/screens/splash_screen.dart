@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text('Yes Diary',
+        child: Text('앗! 네의 일기',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:yes_diary/app/pages/splash_screen.dart';
-import 'package:yes_diary/app/pages/onboarding_screen.dart';
-import 'package:yes_diary/features/diary/presentation/pages/diary_main_page.dart';
+import 'package:yes_diary/screens/splash_screen.dart';
+import 'package:yes_diary/screens/onboarding_screen.dart';
+import 'package:yes_diary/screens/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,10 +34,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: MainScreen(),
       routes: {
-        '/onboarding': (context) => OnboardingScreen(),
-        '/main': (context) => DiaryMainPage(),
+        // '/onboarding': (context) => OnboardingScreen(),
+        // '/main': (context) => MainScreen(),
       },
     );
   }
