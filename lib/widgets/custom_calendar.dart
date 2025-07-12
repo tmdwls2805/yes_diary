@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomCalendar extends StatefulWidget {
   @override
@@ -137,7 +138,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   DateTime day;
                   bool isCurrentMonthDay;
                   bool isPreviousMonthDay = false;
-                  bool isNextMonthDay = false;     
+                  bool isNextMonthDay = false;    
 
                   // GridView 인덱스를 실제 날짜에 매핑
                   if (index < daysToPrepend) {
@@ -218,9 +219,15 @@ class _CustomCalendarState extends State<CustomCalendar> {
     Color textColor;
 
     if (isCurrentMonthDay) {
-      // 현재 달의 날짜: 빨강 네모 (FF4646), 회색 숫자 (C5C5C5)
-      backgroundColor = const Color(0xFFFF4646);
-      textColor = const Color(0xFFC5C5C5);
+      if (isToday) {
+        // 오늘 날짜: 빨간색 배경, 빨간색 글자 (FF4646)
+        backgroundColor = const Color(0xFFFF4646);
+        textColor = const Color(0xFFFF4646);
+      } else {
+        // 현재 달의 다른 날짜: 빨강 네모 (4C3030), 회색 숫자 (C5C5C5)
+        backgroundColor = const Color(0xFF4C3030);
+        textColor = const Color(0xFFC5C5C5);
+      }
     } else if (isPreviousMonthDay) {
       // 전달 날짜: 회색 네모 (363636), 회색 숫자 (363636)
       backgroundColor = const Color(0xFF363636);
@@ -243,8 +250,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
     TextStyle textStyle = TextStyle(color: textColor);
 
-    // "오늘" 날짜와 "선택된" 날짜에 대한 특별한 스타일은 현재 요청에서 통일되었으므로 적용하지 않음
-    
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -258,9 +263,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 오늘 날짜 중 4일에 일기 아이콘 표시 (예시)
-                  if (isCurrentMonthDay && day.day == 4 && day.month == DateTime.now().month && day.year == DateTime.now().year)
-                    const Icon(Icons.edit, color: Colors.white, size: 20),
+                  // 오늘 날짜이고 현재 달에 해당하는 경우에만 일기 아이콘 표시
+                  if (isToday && isCurrentMonthDay)
+                    SvgPicture.asset(
+                      '/icon/write_diary.svg',
+                      width: 36, // 아이콘 크기 조절
+                      height: 36, // 아이콘 크기 조절
+                      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn), // 아이콘 색상 하얗게
+                    ),
                 ],
               ),
             ),
