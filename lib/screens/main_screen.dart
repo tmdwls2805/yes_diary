@@ -15,10 +15,6 @@ class _MainScreenState extends State<MainScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
-  // 💡 버튼 기능 관련 상태 변수 추가
-  int _pressCount = 0; // 버튼이 눌린 횟수
-  final int _maxPressCount = 100; // 최대 눌러야 하는 횟수
-
   // 💡 하단 내비게이션 바 현재 선택된 인덱스
   int _selectedIndex = 0; // 0: 일기, 1: 마이
 
@@ -27,28 +23,39 @@ class _MainScreenState extends State<MainScreen> {
     // 💡 MediaQuery를 사용하여 하단 시스템 내비게이션 바의 높이를 가져옴
     final double bottomSystemPadding = MediaQuery.of(context).padding.bottom;
     
-    // 💡 원하는 BottomNavigationBar의 최소 높이 설정 (예: 80.0)
-    // 이 값은 아이콘+텍스트 높이 + 위아래 여백을 고려하여 조절하세요.
+    // 💡 원하는 BottomNavigationBar의 최소 높이 설정 (80.0px)
     final double desiredNavBarHeight = 80.0; 
 
     return Scaffold(
-      backgroundColor: Colors.black, // 배경색을 검정색으로 유지
+      backgroundColor: const Color(0xFF1A1A1A), // 배경색을 #1A1A1A로 유지
       body: _buildBody(), // 현재 선택된 탭에 따라 body를 빌드하는 함수
       bottomNavigationBar: Container(
-        color: Colors.black, // 컨테이너 배경색
-        // 💡 컨테이너의 전체 높이 = 원하는 내비게이션 바 높이 + 시스템 패딩
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A1A), // 컨테이너 배경색을 #1A1A1A로 유지
+          border: Border(
+            top: BorderSide(
+              color: Color(0xFF3F3F3F), // 테두리 색상 #3F3F3F
+              width: 1.0, // 테두리 두께 1px
+            ),
+          ),
+        ),
+        // 💡 컨테이너의 높이를 다시 설정하여 바텀 네비게이션 바의 전체 공간을 늘립니다.
         height: desiredNavBarHeight + bottomSystemPadding, 
-        padding: EdgeInsets.only(bottom: bottomSystemPadding), // 시스템 내비게이션 바 높이만큼 하단 패딩 추가
-        alignment: Alignment.topCenter, // BottomNavigationBar를 컨테이너 상단에 정렬
+        // 💡 시스템 내비게이션 바 높이만큼 하단 패딩만 추가하여 안전 영역을 확보합니다.
+        padding: EdgeInsets.only(bottom: bottomSystemPadding), 
+        // 💡 BottomNavigationBar를 컨테이너 상단에 정렬하는 속성을 제거하여 내부 콘텐츠가 중앙에 오도록 합니다.
+        // alignment: Alignment.topCenter, 
         child: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
+              // 아이콘 크기를 원래대로 36으로 유지합니다.
               icon: _selectedIndex == 0
                   ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 36, height: 36)
                   : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 36, height: 36),
               label: '일기',
             ),
             BottomNavigationBarItem(
+              // 아이콘 크기를 원래대로 36으로 유지합니다.
               icon: _selectedIndex == 1
                   ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 36, height: 36)
                   : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 36, height: 36),
@@ -59,14 +66,13 @@ class _MainScreenState extends State<MainScreen> {
           selectedItemColor: Colors.red,
           unselectedItemColor: const Color(0xFF808080),
           onTap: _onItemTapped,
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.black, // BottomNavigationBar 자체의 배경색은 검정색으로 유지
           type: BottomNavigationBarType.fixed,
           showSelectedLabels: true,
           showUnselectedLabels: true,
+          // 라벨 폰트 크기를 원래대로 12.0으로 유지합니다.
           selectedLabelStyle: const TextStyle(fontSize: 12.0),
           unselectedLabelStyle: const TextStyle(fontSize: 12.0),
-          // BottomNavigationBar의 기본 높이(약 56.0)를 따르지만,
-          // 감싸는 Container의 높이를 통해 전체 영역을 늘립니다.
         ),
       ),
     );
@@ -78,43 +84,9 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return Column(
           children: [
-            CustomCalendar(), // Custom Calendar Widget
-
-            const Spacer(), // 캘린더와 하단 버튼 사이의 남은 공간을 모두 차지
-
-            // "퇴사하고 싶을 때 누르는 버튼" 컨테이너
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-              child: GestureDetector(
-                onTap: _onButtonPressed, // 버튼 탭 시 _onButtonPressed 함수 호출
-                child: Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: _getButtonFillColor(), // 배경색을 _getButtonFillColor 함수를 통해 동적으로 설정
-                    borderRadius: BorderRadius.circular(10.0), // 둥근 모서리
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween, // 양쪽 정렬
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.local_fire_department, color: Colors.red), // 불꽃 아이콘
-                          SizedBox(width: 8.0),
-                          Text(
-                            // 현재 눌린 횟수를 표시하는 텍스트 추가
-                            '퇴사하고 싶을 때 누르는 버튼 (${_pressCount}/${_maxPressCount})',
-                            style: TextStyle(color: Colors.white, fontSize: 16.0),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '😠', // 이모지
-                        style: TextStyle(fontSize: 24.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            // 💡 CustomCalendar를 Expanded로 감싸서 남은 공간을 모두 차지하도록 합니다.
+            Expanded(
+              child: CustomCalendar(), 
             ),
           ],
         );
@@ -134,26 +106,6 @@ class _MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-    });
-  }
-
-  // 💡 버튼 색상을 계산하는 헬퍼 함수 (기존 코드 유지)
-  Color _getButtonFillColor() {
-    double fillRatio = _pressCount / _maxPressCount;
-    const Color targetColor = Color(0xFFE22200);
-    const Color initialColor = Color(0xFF262626);
-    return Color.lerp(initialColor, targetColor, fillRatio)!;
-  }
-
-  // 💡 버튼이 눌렸을 때 호출되는 함수 (기존 코드 유지)
-  void _onButtonPressed() {
-    setState(() {
-      if (_pressCount < _maxPressCount) {
-        _pressCount++;
-      }
-      if (_pressCount == _maxPressCount) {
-        print('버튼이 100번 눌렸습니다!');
-      }
     });
   }
 }

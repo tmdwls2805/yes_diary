@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yes_diary/screens/diary_write_screen.dart';
 
 class CustomCalendar extends StatefulWidget {
   @override
@@ -9,27 +10,28 @@ class CustomCalendar extends StatefulWidget {
 
 class _CustomCalendarState extends State<CustomCalendar> {
   DateTime? _selectedDay;
-  final DateTime _firstMonth = DateTime.utc(2020, 1, 1); // 캘린더 시작 월 (변경하지 않음)
+  late final DateTime _firstMonth;
 
   late DateTime _focusedDay;
   late PageController _pageController;
 
+  // 💡 드롭다운 아이콘 상태를 위한 변수 추가
+  bool _isDropdownActive = false;
+
   @override
   void initState() {
     super.initState();
-    final DateTime now = DateTime.now(); // 현재 날짜와 시간
-    
-    // 💡 _firstMonth (2020년 1월)부터 현재 월까지의 월 차이를 정확히 계산
-    final int monthsDifference = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month);
-    
-    // 💡 PageController의 초기 페이지를 계산된 월 차이로 설정하여 현재 달이 보이도록 함
-    _pageController = PageController(initialPage: monthsDifference);
-    
-    // 💡 캘린더의 포커스된 달을 현재 달의 1일로 설정
-    _focusedDay = DateTime(now.year, now.month, 1); 
-    
-    // 선택된 날짜는 오늘 날짜로 유지
-    _selectedDay = now; 
+    final DateTime now = DateTime.now();
+
+    // PageView의 시작점을 현재 월로 설정
+    _firstMonth = DateTime.utc(now.year, now.month, 1);
+    int initialPage = 0; // 현재 월이 첫 페이지가 되도록 설정
+
+    _pageController = PageController(initialPage: initialPage);
+
+    _focusedDay = DateTime(now.year, now.month, 1);
+
+    _selectedDay = now;
   }
 
   @override
@@ -41,44 +43,95 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    // 💡 crossAxisSpacing과 mainAxisSpacing을 8.0으로 늘림
-    final double crossAxisSpacing = 8.0;
-    final double mainAxisSpacing = 8.0; 
+    final double crossAxisSpacing = 4.0;
+    // 💡 세로 셀 간격을 2.0으로 조정하여 요일 헤더와 캘린더 그리드를 더 가깝게 붙입니다.
+    final double mainAxisSpacing = 2.0;
 
-    // 💡 squareCellSize 계산식 업데이트 (crossAxisSpacing 변경 반영)
-    // (화면 너비 - 좌우 패딩 16*2 - 셀 간 간격 (8.0*6) ) / 7일
-    final double squareCellSize = (screenWidth - (16.0 * 2) - (crossAxisSpacing * 6)) / 7;
-    
-    final double textSizedBoxHeight = 18.0;
+    final double squareCellSize =
+        (screenWidth - (16.0 * 2) - (crossAxisSpacing * 6)) / 7;
+
+    // 💡 날짜 바로 밑 간격을 늘리기 위해 textSizedBoxHeight를 24.0으로 조정합니다.
+    final double textSizedBoxHeight = 24.0;
     final double gridItemHeight = squareCellSize + textSizedBoxHeight + 4.0;
 
-    // 💡 calendarGridHeight 계산식 업데이트 (mainAxisSpacing 변경 반영)
-    final double calendarGridHeight = (gridItemHeight + mainAxisSpacing) * 6 - mainAxisSpacing;
+    final double calendarGridHeight =
+        (gridItemHeight + mainAxisSpacing) * 6 - mainAxisSpacing;
 
     return Column(
       children: [
-        // Custom Header (Month and Year)
+        // Custom Header (Year and Month)
         Padding(
-          padding: const EdgeInsets.only(top: 24.0, bottom: 24.0, left: 16.0, right: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
+          // 💡 상단 패딩을 44.0으로 조정하여 년도 부분을 상단에서 44px 떨어뜨립니다.
+          // 💡 하단 패딩을 12.0으로 조정하여 캘린더 그리드에 더 가깝게 붙입니다.
+          padding: const EdgeInsets.only(
+              top: 44.0, bottom: 12.0, left: 16.0, right: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                DateFormat('MMMM', 'en_US').format(_focusedDay).toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 28.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              GestureDetector(
+                onTap: () {
+                  // 년도 옆 드롭다운 아이콘을 누를 때마다 즉시 상태 변경
+                  setState(() {
+                    _isDropdownActive = !_isDropdownActive; // 아이콘 상태 토글
+                  });
+                  // TODO: Implement year picker functionality here if needed
+                  print('Year tapped! Dropdown state: $_isDropdownActive');
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('yyyy', 'en_US')
+                          .format(_focusedDay), // Display Year
+                      style: const TextStyle(
+                        fontSize: 36.0, // Year font size set to 36.0px
+                        color: Colors.white,
+                      ),
+                    ),
+                    // 💡 년도 텍스트와 드롭다운 아이콘 사이에 8.0px 간격 추가
+                    const SizedBox(width: 8.0),
+                    // 💡 드롭다운 아이콘을 SVG로 교체하고 상태에 따라 변경
+                    SvgPicture.asset(
+                      _isDropdownActive
+                          ? 'assets/icon/calendar_dropdown_active.svg'
+                          : 'assets/icon/calendar_dropdown_inactive.svg',
+                      width: 16, // 💡 아이콘 크기 16.0px로 조정
+                      height: 16, // 💡 아이콘 크기 16.0px로 조정
+                    ),
+                  ],
                 ),
               ),
-              const Icon(Icons.arrow_drop_down, color: Colors.white),
-              const SizedBox(width: 8.0),
+              // 💡 년도와 달 사이의 간격을 0.0으로 조정하여 더 가깝게 붙입니다.
+              const SizedBox(height: 0.0),
+              GestureDetector(
+                onTap: () {
+                  // TODO: Implement month picker functionality here if needed
+                  print('Month tapped!');
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('MMMM', 'en_US')
+                          .format(_focusedDay)
+                          .toUpperCase(), // Display Month
+                      style: const TextStyle(
+                        fontSize: 16.0, // Month font size set to 16.0px
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    // Removed the Icon here as requested
+                  ],
+                ),
+              ),
             ],
           ),
         ),
         // Days of Week Header
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          // 요일 헤더의 세로 패딩은 0.0으로 유지하여 캘린더 그리드에 최대한 가깝게 붙입니다.
+          padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (index) {
@@ -90,6 +143,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14.0, // 요일 글자 크기를 14.0px로 유지
                     ),
                   ),
                 ),
@@ -99,67 +153,64 @@ class _CustomCalendarState extends State<CustomCalendar> {
         ),
         // Calendar Grid - PageView for horizontal scrolling
         SizedBox(
-          height: calendarGridHeight,
+          height: calendarGridHeight, // 6주가 보이도록 계산된 고정 높이
           child: PageView.builder(
             controller: _pageController,
+            // 스크롤 물리학을 BouncingScrollPhysics로 설정하여 부드러운 스크롤 효과
+            physics: const BouncingScrollPhysics(),
             onPageChanged: (index) {
               setState(() {
-                // _firstMonth를 기준으로 페이지 인덱스에 해당하는 날짜로 _focusedDay 업데이트
-                _focusedDay = DateTime(_firstMonth.year, _firstMonth.month + index, _firstMonth.day);
+                _focusedDay = DateTime(
+                    _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
               });
             },
             itemBuilder: (context, pageIndex) {
-              // _firstMonth를 기준으로 현재 페이지에 해당하는 월 계산
-              final currentMonth = DateTime(_firstMonth.year, _firstMonth.month + pageIndex, _firstMonth.day);
-              final firstDayOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
-              final daysInMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
-              final int firstDayOfWeek = firstDayOfMonth.weekday; // Monday is 1, Sunday is 7
+              final currentMonth = DateTime(
+                  _firstMonth.year, _firstMonth.month + pageIndex, _firstMonth.day);
+              final firstDayOfMonth =
+                  DateTime(currentMonth.year, currentMonth.month, 1);
+              final daysInMonth =
+                  DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+              final int firstDayOfWeek = firstDayOfMonth.weekday;
 
-              // GridView에 표시될 첫 날짜의 요일을 일요일(0) 기준으로 맞추기 위한 공백 계산
               final int daysToPrepend = (firstDayOfWeek == 7) ? 0 : firstDayOfWeek;
 
-              // 캘린더 그리드는 항상 6주(42일) 기준으로 그림
-              final int fixedTotalCells = 42; 
+              final int fixedTotalCells = 42;
 
               return GridView.builder(
                 key: ValueKey(currentMonth.month + currentMonth.year * 12),
-                physics: const NeverScrollableScrollPhysics(), // GridView 내부 스크롤 비활성화
-                padding: const EdgeInsets.symmetric(horizontal: 16.0), // GridView의 좌우 패딩
+                physics: const NeverScrollableScrollPhysics(), // GridView 자체 스크롤 방지
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7, // 주 7일
-                  mainAxisSpacing: mainAxisSpacing, // 💡 세로 셀 간격 적용
-                  crossAxisSpacing: crossAxisSpacing, // 💡 가로 셀 간격 적용
-                  childAspectRatio: squareCellSize / gridItemHeight, // 셀의 가로세로 비율
+                  crossAxisCount: 7,
+                  mainAxisSpacing: mainAxisSpacing,
+                  crossAxisSpacing: crossAxisSpacing,
+                  childAspectRatio: squareCellSize / gridItemHeight,
                 ),
                 itemBuilder: (context, index) {
-                  // 고정된 42개 셀을 넘어가면 빈 위젯 반환
+                  // 다음 달 날짜는 아예 렌더링하지 않습니다.
+                  if (index >= daysToPrepend + daysInMonth) {
+                    return const SizedBox.shrink();
+                  }
                   if (index >= fixedTotalCells) return const SizedBox.shrink();
 
                   DateTime day;
                   bool isCurrentMonthDay;
                   bool isPreviousMonthDay = false;
-                  bool isNextMonthDay = false;    
 
-                  // GridView 인덱스를 실제 날짜에 매핑
                   if (index < daysToPrepend) {
-                    // 이전 달의 날짜 계산
-                    final prevMonthLastDay = DateTime(currentMonth.year, currentMonth.month, 0);
-                    day = DateTime(prevMonthLastDay.year, prevMonthLastDay.month, prevMonthLastDay.day - (daysToPrepend - 1 - index));
+                    final prevMonthLastDay =
+                        DateTime(currentMonth.year, currentMonth.month, 0);
+                    day = DateTime(prevMonthLastDay.year, prevMonthLastDay.month,
+                        prevMonthLastDay.day - (daysToPrepend - 1 - index));
                     isCurrentMonthDay = false;
                     isPreviousMonthDay = true;
-                  } else if (index >= daysToPrepend + daysInMonth) {
-                    // 다음 달의 날짜 계산
-                    final nextMonthFirstDay = DateTime(currentMonth.year, currentMonth.month + 1, 1);
-                    day = DateTime(nextMonthFirstDay.year, nextMonthFirstDay.month, (index - (daysToPrepend + daysInMonth)) + 1);
-                    isCurrentMonthDay = false;
-                    isNextMonthDay = true;
                   } else {
-                    // 현재 달의 날짜 계산
-                    day = DateTime(currentMonth.year, currentMonth.month, index - daysToPrepend + 1);
+                    day = DateTime(
+                        currentMonth.year, currentMonth.month, index - daysToPrepend + 1);
                     isCurrentMonthDay = true;
                   }
 
-                  // 오늘 날짜인지, 선택된 날짜인지, 주말인지 판단
                   final bool isToday = day.year == DateTime.now().year &&
                       day.month == DateTime.now().month &&
                       day.day == DateTime.now().day;
@@ -169,9 +220,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       day.month == _selectedDay!.month &&
                       day.day == _selectedDay!.day;
 
-                  final bool isWeekend = day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
+                  final bool isWeekend =
+                      day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
 
-                  // _buildDayCell 위젯을 사용하여 각 날짜 셀 렌더링
                   return _buildDayCell(
                     day: day,
                     isToday: isToday,
@@ -179,30 +230,39 @@ class _CustomCalendarState extends State<CustomCalendar> {
                     isWeekend: isWeekend,
                     isCurrentMonthDay: isCurrentMonthDay,
                     isPreviousMonthDay: isPreviousMonthDay,
-                    isNextMonthDay: isNextMonthDay,
                     squareCellSize: squareCellSize,
                     textSizedBoxHeight: textSizedBoxHeight,
-                    onTap: () {
-                      if (isCurrentMonthDay) { // 현재 달의 날짜만 선택 가능하도록
-                        setState(() {
-                          _selectedDay = day;
-                        });
-                      }
-                      // 이전/다음 달 날짜는 탭해도 아무 동작 없음 (이전 요청에 따라)
-                    },
+                    // 현재 월의 날짜인 경우에만 onTap을 활성화합니다.
+                    onTap: isCurrentMonthDay
+                        ? () {
+                            setState(() {
+                              _selectedDay = day;
+                            });
+                            // diary_write_screen으로 이동
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DiaryWriteScreen(selectedDate: day),
+                              ),
+                            );
+                          }
+                        : null, // 이전 달이나 다음 달 날짜는 클릭 비활성화
                   );
                 },
-                itemCount: fixedTotalCells, // 고정된 셀 개수 (42)
+                itemCount: fixedTotalCells,
               );
             },
-            itemCount: 200000, // 무한 스크롤 효과를 위한 PageView 아이템 수
+            itemCount: 200000,
           ),
         ),
+
+        // 캘린더 그리드와 버튼 사이에 Spacer를 추가하여 버튼을 하단으로 밀어냅니다.
+        const Spacer(),
       ],
     );
   }
 
-  // 각 날짜 셀을 빌드하는 헬퍼 위젯
   Widget _buildDayCell({
     required DateTime day,
     required bool isToday,
@@ -210,10 +270,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
     required bool isWeekend,
     required bool isCurrentMonthDay,
     required bool isPreviousMonthDay,
-    required bool isNextMonthDay,
     required double squareCellSize,
     required double textSizedBoxHeight,
-    required VoidCallback onTap,
+    required VoidCallback? onTap, // onTap은 null일 수 있음
   }) {
     Color backgroundColor;
     Color textColor;
@@ -224,22 +283,18 @@ class _CustomCalendarState extends State<CustomCalendar> {
         backgroundColor = const Color(0xFFFF4646);
         textColor = const Color(0xFFFF4646);
       } else {
-        // 현재 달의 다른 날짜: 빨강 네모 (4C3030), 회색 숫자 (C5C5C5)
+        // 💡 현재 달의 다른 날짜: 빨강 네모 (4C3030), 글자색 C5C5C5
         backgroundColor = const Color(0xFF4C3030);
         textColor = const Color(0xFFC5C5C5);
       }
     } else if (isPreviousMonthDay) {
-      // 전달 날짜: 회색 네모 (363636), 회색 숫자 (363636)
+      // 이전 달 날짜: 배경색과 글자색을 363636으로 설정하여 숨깁니다.
       backgroundColor = const Color(0xFF363636);
       textColor = const Color(0xFF363636);
-    } else if (isNextMonthDay) {
-      // 다음 달 날짜: 검정색 배경, 검정색 숫자 (안보이게)
-      backgroundColor = Colors.black;
-      textColor = Colors.black;
     } else {
-      // 예상치 못한 경우 (백업)
-      backgroundColor = Colors.black;
-      textColor = Colors.black;
+      // 이 경우는 발생하지 않아야 하지만, 혹시 모를 상황을 대비
+      backgroundColor = Colors.transparent;
+      textColor = Colors.transparent;
     }
 
     BoxDecoration decoration = BoxDecoration(
@@ -248,10 +303,11 @@ class _CustomCalendarState extends State<CustomCalendar> {
       borderRadius: BorderRadius.circular(4.0),
     );
 
-    TextStyle textStyle = TextStyle(color: textColor);
+    // 날짜 글자 크기를 14.0px로 유지
+    TextStyle textStyle = TextStyle(color: textColor, fontSize: 14.0);
 
     return GestureDetector(
-      onTap: onTap,
+      onTap: onTap, // 전달받은 onTap을 그대로 사용
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2.0),
         child: Column(
@@ -263,13 +319,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 오늘 날짜이고 현재 달에 해당하는 경우에만 일기 아이콘 표시
                   if (isToday && isCurrentMonthDay)
                     SvgPicture.asset(
-                      '/icon/write_diary.svg',
-                      width: 36, // 아이콘 크기 조절
-                      height: 36, // 아이콘 크기 조절
-                      colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn), // 아이콘 색상 하얗게
+                      'assets/icon/write_diary.svg',
+                      width: 36,
+                      height: 36,
+                      colorFilter:
+                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                     ),
                 ],
               ),
