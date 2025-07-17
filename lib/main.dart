@@ -2,8 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:yes_diary/screens/splash_screen.dart';
 import 'package:yes_diary/screens/onboarding_screen.dart';
 import 'package:yes_diary/screens/main_screen.dart';
+import 'package:yes_diary/services/database_service.dart';
 
-void main() {
+void main() async {
+  // Flutter 바인딩 초기화
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 데이터베이스 초기화
+  try {
+    await DatabaseService.instance.initialize();
+    print('앱 시작: 데이터베이스 초기화 성공');
+  } catch (e) {
+    print('앱 시작: 데이터베이스 초기화 실패 - $e');
+  }
+  
   runApp(const MyApp());
 }
 
