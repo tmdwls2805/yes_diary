@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
-import 'package:yes_diary/services/database_service.dart'; // DatabaseService import
-import 'package:yes_diary/screens/diary_view_screen.dart'; // DiaryViewScreen import
+import 'package:yes_diary/services/database_service.dart';
+import 'package:yes_diary/screens/diary_view_screen.dart';
+import 'package:yes_diary/models/diary_entry.dart'; // DiaryEntry import 추가
+import 'package:fluttertoast/fluttertoast.dart';
 
 class CustomCalendar extends StatefulWidget {
   final DateTime? initialDate;
-  final String? userId; // userId 필드 추가
+  final String? userId;
 
   const CustomCalendar({Key? key, this.initialDate, this.userId}) : super(key: key);
 
@@ -22,28 +24,36 @@ class _CustomCalendarState extends State<CustomCalendar> {
   late DateTime _focusedDay;
   late PageController _pageController;
 
-  // 💡 드롭다운 아이콘 상태를 위한 변수 추가
   bool _isDropdownActive = false;
+
+  Map<DateTime, String> _diariesEmotionMap = {}; // 날짜별 감정 저장 맵
+
+  // 감정 이름과 SVG 경로 매핑 (DiaryWriteScreen과 동일하게)
+  final Map<String, String> _emotionSvgPaths = {
+    'angry': 'assets/emotion/red.svg',
+    'pensive': 'assets/emotion/yellow.svg',
+    'neutral': 'assets/emotion/blue.svg',
+    'sad': 'assets/emotion/pink.svg',
+    'happy': 'assets/emotion/green.svg',
+  };
 
   @override
   void initState() {
     super.initState();
     final DateTime now = DateTime.now();
 
-    // initialDate가 제공되면 해당 날짜로, 아니면 현재 날짜로 설정
     final DateTime effectiveDate = widget.initialDate ?? now;
 
-    // PageView의 시작점을 effectiveDate의 월로 설정
     _firstMonth = DateTime.utc(effectiveDate.year, effectiveDate.month, 1);
     
-    // _focusedDay도 effectiveDate의 월로 설정
     _focusedDay = DateTime(effectiveDate.year, effectiveDate.month, 1);
     
-    // 현재 월이 첫 페이지가 되도록 초기 페이지 계산
     int initialPage = DateTime.now().month - _firstMonth.month + (DateTime.now().year - _firstMonth.year) * 12;
     _pageController = PageController(initialPage: initialPage);
 
-    _selectedDay = now; // 항상 오늘 날짜가 선택된 상태로 시작
+    _selectedDay = now;
+
+    _loadDiariesForMonth(_focusedDay); // 초기 월의 일기 로드
   }
 
   @override
@@ -52,252 +62,315 @@ class _CustomCalendarState extends State<CustomCalendar> {
     super.dispose();
   }
 
+  // 해당 월의 일기 데이터를 로드하는 함수
+  Future<void> _loadDiariesForMonth(DateTime month) async {
+    if (widget.userId == null) {
+      print('CustomCalendar: User ID is null, cannot load diaries.');
+      return;
+    }
+
+    final startOfMonth = DateTime(month.year, month.month, 1);
+    final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+
+    try {
+      final List<DiaryEntry> diaries = await DatabaseService.instance.diaryRepository.getDiariesByDateRangeAndUserId(
+        startOfMonth,
+        endOfMonth,
+        widget.userId!,
+      );
+      setState(() {
+        _diariesEmotionMap.clear(); // 이전 데이터 클리어
+        for (var entry in diaries) {
+          // 날짜만 포함하도록 정규화 (시간 무시)
+          _diariesEmotionMap[DateTime(entry.date.year, entry.date.month, entry.date.day)] = entry.emotion;
+        }
+        print('CustomCalendar: Loaded diaries for ${DateFormat('yyyy-MM').format(month)}. Map size: ${_diariesEmotionMap.length}');
+        _diariesEmotionMap.forEach((date, emotion) {
+          print('  Date: ${DateFormat('yyyy-MM-dd').format(date)}, Emotion: $emotion');
+        });
+      });
+    } catch (e) {
+      print('Failed to load diaries for month: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double crossAxisSpacing = 4.0;
-    // 💡 세로 셀 간격을 2.0으로 조정하여 요일 헤더와 캘린더 그리드를 더 가깝게 붙입니다.
     final double mainAxisSpacing = 2.0;
 
     final double squareCellSize =
         (screenWidth - (16.0 * 2) - (crossAxisSpacing * 6)) / 7;
 
-    // 💡 날짜 바로 밑 간격을 늘리기 위해 textSizedBoxHeight를 24.0으로 조정합니다.
     final double textSizedBoxHeight = 24.0;
     final double gridItemHeight = squareCellSize + textSizedBoxHeight + 4.0;
 
     final double calendarGridHeight =
         (gridItemHeight + mainAxisSpacing) * 6 - mainAxisSpacing;
 
-    return Column(
-      children: [
-        // Custom Header (Year and Month)
-        Padding(
-          // 💡 상단 패딩을 44.0으로 조정하여 년도 부분을 상단에서 44px 떨어뜨립니다.
-          // 💡 하단 패딩을 12.0으로 조정하여 캘린더 그리드에 더 가깝게 붙입니다.
-          padding: const EdgeInsets.only(
-              top: 44.0, bottom: 12.0, left: 16.0, right: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  // 년도 옆 드롭다운 아이콘을 누를 때마다 즉시 상태 변경
-                  setState(() {
-                    _isDropdownActive = !_isDropdownActive; // 아이콘 상태 토글
-                  });
-                  // TODO: Implement year picker functionality here if needed
-                  print('Year tapped! Dropdown state: $_isDropdownActive');
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      DateFormat('yyyy', 'en_US')
-                          .format(_focusedDay), // Display Year
-                      style: const TextStyle(
-                        fontSize: 36.0, // Year font size set to 36.0px
-                        color: Colors.white,
+    return PopScope(
+      canPop: false, // 기본 뒤로가기 동작 방지
+      onPopInvoked: (didPop) {
+        // didPop이 true이면 시스템 뒤로가기 동작이 이미 발생했으므로 추가 처리 불필요
+        if (didPop) return;
+
+        final DateTime now = DateTime.now();
+        final DateTime currentMonth = DateTime(now.year, now.month, 1);
+        final DateTime focusedMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
+
+        if (focusedMonth.year != currentMonth.year || focusedMonth.month != currentMonth.month) {
+          // 현재 달이 아닌 경우, 현재 달로 이동
+          final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month);
+          _pageController.jumpToPage(targetPageIndex);
+          setState(() {
+            _focusedDay = currentMonth;
+          });
+        } else {
+          // 현재 달인 경우, 앱 종료 방지를 위해 Navigator.pop 호출
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            // 이 경우가 발생하면 앱이 종료될 수 있음 (예: 스택의 마지막 라우트)
+            // 필요에 따라 여기에 앱 종료 로직 추가 또는 사용자에게 알림
+            print('No more routes to pop. Consider exiting app or showing a message.');
+          }
+        }
+      },
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+                top: 44.0, bottom: 12.0, left: 16.0, right: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isDropdownActive = !_isDropdownActive; 
+                    });
+                    print('Year tapped! Dropdown state: $_isDropdownActive');
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('yyyy', 'en_US')
+                            .format(_focusedDay),
+                        style: const TextStyle(
+                          fontSize: 36.0,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    // 💡 년도 텍스트와 드롭다운 아이콘 사이에 8.0px 간격 추가
-                    const SizedBox(width: 8.0),
-                    // 💡 드롭다운 아이콘을 SVG로 교체하고 상태에 따라 변경
-                    SvgPicture.asset(
-                      _isDropdownActive
-                          ? 'assets/icon/calendar_dropdown_active.svg'
-                          : 'assets/icon/calendar_dropdown_inactive.svg',
-                      width: 16, // 💡 아이콘 크기 16.0px로 조정
-                      height: 16, // 💡 아이콘 크기 16.0px로 조정
-                    ),
-                  ],
-                ),
-              ),
-              // 💡 년도와 달 사이의 간격을 0.0으로 조정하여 더 가깝게 붙입니다.
-              const SizedBox(height: 0.0),
-              GestureDetector(
-                onTap: () {
-                  // TODO: Implement month picker functionality here if needed
-                  print('Month tapped!');
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      DateFormat('MMMM', 'en_US')
-                          .format(_focusedDay)
-                          .toUpperCase(), // Display Month
-                      style: const TextStyle(
-                        fontSize: 16.0, // Month font size set to 16.0px
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      const SizedBox(width: 8.0),
+                      SvgPicture.asset(
+                        _isDropdownActive
+                            ? 'assets/icon/calendar_dropdown_active.svg'
+                            : 'assets/icon/calendar_dropdown_inactive.svg',
+                        width: 16,
+                        height: 16,
                       ),
-                    ),
-                    // Removed the Icon here as requested
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Days of Week Header
-        Container(
-          // 요일 헤더의 세로 패딩은 0.0으로 유지하여 캘린더 그리드에 최대한 가깝게 붙입니다.
-          padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(7, (index) {
-              final days = ['일', '월', '화', '수', '목', '금', '토'];
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    days[index],
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.0, // 요일 글자 크기를 14.0px로 유지
-                    ),
+                    ],
                   ),
                 ),
-              );
-            }),
-          ),
-        ),
-        // Calendar Grid - PageView for horizontal scrolling
-        SizedBox(
-          height: calendarGridHeight, // 6주가 보이도록 계산된 고정 높이
-          child: PageView.builder(
-            controller: _pageController,
-            // 스크롤 물리학을 BouncingScrollPhysics로 설정하여 부드러운 스크롤 효과
-            physics: const BouncingScrollPhysics(),
-            onPageChanged: (index) {
-              setState(() {
-                _focusedDay = DateTime(
-                    _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
-              });
-            },
-            itemBuilder: (context, pageIndex) {
-              final currentMonth = DateTime(
-                  _firstMonth.year, _firstMonth.month + pageIndex, _firstMonth.day);
-              final firstDayOfMonth =
-                  DateTime(currentMonth.year, currentMonth.month, 1);
-              final daysInMonth =
-                  DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
-              final int firstDayOfWeek = firstDayOfMonth.weekday;
-
-              final int daysToPrepend = (firstDayOfWeek == 7) ? 0 : firstDayOfWeek;
-
-              final int fixedTotalCells = 42;
-
-              return GridView.builder(
-                key: ValueKey(currentMonth.month + currentMonth.year * 12),
-                physics: const NeverScrollableScrollPhysics(), // GridView 자체 스크롤 방지
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: mainAxisSpacing,
-                  crossAxisSpacing: crossAxisSpacing,
-                  childAspectRatio: squareCellSize / gridItemHeight,
+                const SizedBox(height: 0.0),
+                GestureDetector(
+                  onTap: () {
+                    print('Month tapped!');
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('MMMM', 'en_US')
+                            .format(_focusedDay)
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                itemBuilder: (context, index) {
-                  // 다음 달 날짜는 아예 렌더링하지 않습니다.
-                  if (index >= daysToPrepend + daysInMonth) {
-                    return const SizedBox.shrink();
-                  }
-                  if (index >= fixedTotalCells) return const SizedBox.shrink();
-
-                  DateTime day;
-                  bool isCurrentMonthDay;
-                  bool isPreviousMonthDay = false;
-
-                  if (index < daysToPrepend) {
-                    final prevMonthLastDay =
-                        DateTime(currentMonth.year, currentMonth.month, 0);
-                    day = DateTime(prevMonthLastDay.year, prevMonthLastDay.month,
-                        prevMonthLastDay.day - (daysToPrepend - 1 - index));
-                    isCurrentMonthDay = false;
-                    isPreviousMonthDay = true;
-                  } else {
-                    day = DateTime(
-                        currentMonth.year, currentMonth.month, index - daysToPrepend + 1);
-                    isCurrentMonthDay = true;
-                  }
-
-                  final bool isToday = day.year == DateTime.now().year &&
-                      day.month == DateTime.now().month &&
-                      day.day == DateTime.now().day;
-
-                  final bool isSelected = _selectedDay != null &&
-                      day.year == _selectedDay!.year &&
-                      day.month == _selectedDay!.month &&
-                      day.day == _selectedDay!.day;
-
-                  final bool isWeekend =
-                      day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
-
-                  return _buildDayCell(
-                    day: day,
-                    isToday: isToday,
-                    isSelected: isSelected,
-                    isWeekend: isWeekend,
-                    isCurrentMonthDay: isCurrentMonthDay,
-                    isPreviousMonthDay: isPreviousMonthDay,
-                    squareCellSize: squareCellSize,
-                    textSizedBoxHeight: textSizedBoxHeight,
-                    onTap: isCurrentMonthDay
-                        ? () async { // 비동기 함수로 변경
-                            setState(() {
-                              _selectedDay = day;
-                            });
-
-                            // userId가 유효한 경우에만 일기 존재 여부 확인
-                            if (widget.userId != null) {
-                              final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
-                              
-                              if (hasDiary) {
-                                // 일기 조회 화면으로 이동
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DiaryViewScreen(selectedDate: day),
-                                  ),
-                                );
-                                print('일기 있음: ${day.toIso8601String()}');
-                              } else {
-                                // 새 일기 작성 화면으로 이동
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DiaryWriteScreen(selectedDate: day),
-                                  ),
-                                );
-                                print('일기 없음: ${day.toIso8601String()}');
-                              }
-                            } else {
-                                // userId가 없으면 기본 동작 (일기 작성 화면으로 이동)
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        DiaryWriteScreen(selectedDate: day),
-                                  ),
-                                );
-                                print('userId 없음. 일기 작성 화면으로 이동.');
-                            }
-                          }
-                        : null,
-                  );
-                },
-                itemCount: fixedTotalCells,
-              );
-            },
-            itemCount: 200000,
+              ],
+            ),
           ),
-        ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(7, (index) {
+                final days = ['일', '월', '화', '수', '목', '금', '토'];
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      days[index],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.0,
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+          SizedBox(
+            height: calendarGridHeight,
+            child: PageView.builder(
+              controller: _pageController,
+              physics: const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() {
+                  _focusedDay = DateTime(
+                      _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
+                });
+                _loadDiariesForMonth(_focusedDay); // 월 변경 시 일기 로드
+              },
+              itemBuilder: (context, pageIndex) {
+                final currentMonth = DateTime(
+                    _firstMonth.year, _firstMonth.month + pageIndex, _firstMonth.day);
+                final firstDayOfMonth =
+                    DateTime(currentMonth.year, currentMonth.month, 1);
+                final daysInMonth =
+                    DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+                final int firstDayOfWeek = firstDayOfMonth.weekday;
 
-        // 캘린더 그리드와 버튼 사이에 Spacer를 추가하여 버튼을 하단으로 밀어냅니다.
-        const Spacer(),
-      ],
+                final int daysToPrepend = (firstDayOfWeek == 7) ? 0 : firstDayOfWeek;
+
+                final int fixedTotalCells = 42;
+
+                return GridView.builder(
+                  key: ValueKey(currentMonth.month + currentMonth.year * 12),
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 7,
+                    mainAxisSpacing: mainAxisSpacing,
+                    crossAxisSpacing: crossAxisSpacing,
+                    childAspectRatio: squareCellSize / gridItemHeight,
+                  ),
+                  itemBuilder: (context, index) {
+                    if (index >= daysToPrepend + daysInMonth) {
+                      return const SizedBox.shrink();
+                    }
+                    if (index >= fixedTotalCells) return const SizedBox.shrink();
+
+                    DateTime day;
+                    bool isCurrentMonthDay;
+                    bool isPreviousMonthDay = false;
+
+                    if (index < daysToPrepend) {
+                      final prevMonthLastDay =
+                          DateTime(currentMonth.year, currentMonth.month, 0);
+                      day = DateTime(prevMonthLastDay.year, prevMonthLastDay.month,
+                          prevMonthLastDay.day - (daysToPrepend - 1 - index));
+                      isCurrentMonthDay = false;
+                      isPreviousMonthDay = true;
+                    } else {
+                      day = DateTime(
+                          currentMonth.year, currentMonth.month, index - daysToPrepend + 1);
+                      isCurrentMonthDay = true;
+                    }
+
+                    final bool isToday = day.year == DateTime.now().year &&
+                        day.month == DateTime.now().month &&
+                        day.day == DateTime.now().day;
+
+                    final bool isSelected = _selectedDay != null &&
+                        day.year == _selectedDay!.year &&
+                        day.month == _selectedDay!.month &&
+                        day.day == _selectedDay!.day;
+
+                    final bool isWeekend =
+                        day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
+                    
+                    // 현재 날짜를 정규화하여 맵에서 찾기
+                    final DateTime normalizedDay = DateTime(day.year, day.month, day.day);
+                    final String? emotion = _diariesEmotionMap[normalizedDay];
+
+                    return _buildDayCell(
+                      day: day,
+                      isToday: isToday,
+                      isSelected: isSelected,
+                      isWeekend: isWeekend,
+                      isCurrentMonthDay: isCurrentMonthDay,
+                      isPreviousMonthDay: isPreviousMonthDay,
+                      squareCellSize: squareCellSize,
+                      textSizedBoxHeight: textSizedBoxHeight,
+                      onTap: isCurrentMonthDay
+                          ? () async { // 비동기 함수로 변경
+                              setState(() {
+                                _selectedDay = day;
+                              });
+
+                              final DateTime today = DateTime.now();
+                              final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
+                              final DateTime normalizedSelectedDay = DateTime(day.year, day.month, day.day);
+
+                              if (normalizedSelectedDay.isAfter(normalizedToday)) {
+                                Fluttertoast.showToast(
+                                  msg: "아직 일기를 작성할 수 없습니다.",
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.CENTER,
+                                  timeInSecForIosWeb: 1,
+                                  backgroundColor: Colors.black,
+                                  textColor: Colors.white,
+                                  fontSize: 16.0,
+                                );
+                                print('미래 날짜 선택됨: ${day.toIso8601String()}');
+                                return; // 미래 날짜는 일기 작성/조회로 이동하지 않음
+                              }
+
+                              if (widget.userId != null) {
+                                final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
+                                
+                                if (hasDiary) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DiaryViewScreen(selectedDate: day),
+                                    ),
+                                  ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                                  print('일기 있음: ${day.toIso8601String()}');
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DiaryWriteScreen(selectedDate: day),
+                                    ),
+                                  ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                                  print('일기 없음: ${day.toIso8601String()}');
+                                }
+                              } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          DiaryWriteScreen(selectedDate: day),
+                                    ),
+                                  ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                                  print('userId 없음. 일기 작성 화면으로 이동.');
+                              }
+                            }
+                          : null,
+                      emotion: emotion, // 감정 정보 전달
+                    );
+                  },
+                  itemCount: fixedTotalCells,
+                );
+              },
+              itemCount: 200000,
+            ),
+          ),
+
+          const Spacer(),
+        ],
+      ),
     );
   }
 
@@ -310,29 +383,55 @@ class _CustomCalendarState extends State<CustomCalendar> {
     required bool isPreviousMonthDay,
     required double squareCellSize,
     required double textSizedBoxHeight,
-    required VoidCallback? onTap, // onTap은 null일 수 있음
+    required VoidCallback? onTap,
+    String? emotion,
   }) {
     Color backgroundColor;
     Color textColor;
+    Widget? emotionSvgWidget; 
+    Widget? todayIconWidget; // 오늘 날짜 이모티콘 위젯
 
+    // 1. 배경색 및 글자색 결정
     if (isCurrentMonthDay) {
       if (isToday) {
-        // 오늘 날짜: 빨간색 배경, 빨간색 글자 (FF4646)
         backgroundColor = const Color(0xFFFF4646);
         textColor = const Color(0xFFFF4646);
       } else {
-        // 💡 현재 달의 다른 날짜: 빨강 네모 (4C3030), 글자색 C5C5C5
         backgroundColor = const Color(0xFF4C3030);
         textColor = const Color(0xFFC5C5C5);
       }
     } else if (isPreviousMonthDay) {
-      // 이전 달 날짜: 배경색과 글자색을 363636으로 설정하여 숨깁니다.
       backgroundColor = const Color(0xFF363636);
       textColor = const Color(0xFF363636);
     } else {
-      // 이 경우는 발생하지 않아야 하지만, 혹시 모를 상황을 대비
       backgroundColor = Colors.transparent;
       textColor = Colors.transparent;
+    }
+
+    // 2. 감정 SVG 위젯 설정
+    if (emotion != null && isCurrentMonthDay) {
+      final svgPath = _emotionSvgPaths[emotion];
+      if (svgPath != null) {
+        emotionSvgWidget = SvgPicture.asset(
+          svgPath,
+          width: squareCellSize,
+          height: squareCellSize,
+          fit: BoxFit.contain,
+        );
+        // 감정 SVG가 있으면 배경색을 투명으로, 글자색을 검정으로
+        backgroundColor = Colors.transparent; // 배경을 감정 SVG로 대체
+      }
+    }
+
+    // 3. 오늘 날짜 작성 이모티콘 위젯 설정
+    // 일기 감정 이모티콘이 없는 경우에만 표시
+    if (isToday && isCurrentMonthDay && emotion == null) {
+      todayIconWidget = SvgPicture.asset(
+        'assets/icon/write_diary.svg',
+        width: squareCellSize * 0.8, 
+        height: squareCellSize * 0.8,
+        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+      );
     }
 
     BoxDecoration decoration = BoxDecoration(
@@ -341,11 +440,10 @@ class _CustomCalendarState extends State<CustomCalendar> {
       borderRadius: BorderRadius.circular(4.0),
     );
 
-    // 날짜 글자 크기를 14.0px로 유지
     TextStyle textStyle = TextStyle(color: textColor, fontSize: 14.0);
 
     return GestureDetector(
-      onTap: onTap, // 전달받은 onTap을 그대로 사용
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 2.0),
         child: Column(
@@ -354,17 +452,12 @@ class _CustomCalendarState extends State<CustomCalendar> {
               height: squareCellSize,
               width: squareCellSize,
               decoration: decoration,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack( 
+                alignment: Alignment.center,
                 children: [
-                  if (isToday && isCurrentMonthDay)
-                    SvgPicture.asset(
-                      'assets/icon/write_diary.svg',
-                      width: 36,
-                      height: 36,
-                      colorFilter:
-                          const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                    ),
+                  // 감정 SVG (있다면) 및 오늘 아이콘 (있다면) 표시
+                  if (emotionSvgWidget != null) emotionSvgWidget!,
+                  if (todayIconWidget != null) todayIconWidget!,
                 ],
               ),
             ),
