@@ -2,11 +2,13 @@ class DiaryEntry {
   final DateTime date;
   final String content;
   final String emotion;
+  final String? userId;
 
   DiaryEntry({
     required this.date,
     required this.content,
     required this.emotion,
+    this.userId, // userId 필드 추가
   });
 
   /// DiaryEntry 객체를 Map으로 변환 (데이터베이스 저장용)
@@ -15,6 +17,7 @@ class DiaryEntry {
       'date': date.toIso8601String(),
       'content': content,
       'emotion': emotion,
+      'userId': userId, // userId 필드 추가
     };
   }
 
@@ -24,6 +27,7 @@ class DiaryEntry {
       date: DateTime.parse(map['date']),
       content: map['content'],
       emotion: map['emotion'],
+      userId: map['userId'], // userId 필드 추가
     );
   }
 
@@ -33,14 +37,15 @@ class DiaryEntry {
     return other is DiaryEntry &&
         other.date == date &&
         other.content == content &&
-        other.emotion == emotion;
+        other.emotion == emotion &&
+        other.userId == userId; // userId 비교 추가
   }
 
   @override
-  int get hashCode => date.hashCode ^ content.hashCode ^ emotion.hashCode;
+  int get hashCode => date.hashCode ^ content.hashCode ^ emotion.hashCode ^ userId.hashCode;
 
   @override
   String toString() {
-    return 'DiaryEntry(date: $date, content: $content, emotion: $emotion)';
+    return 'DiaryEntry(date: $date, content: $content, emotion: $emotion, userId: $userId)';
   }
 } 

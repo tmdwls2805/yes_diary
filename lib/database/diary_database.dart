@@ -5,7 +5,7 @@ import '../models/diary_entry.dart';
 
 class DiaryDatabase {
   static const String _databaseName = 'diary.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 3;
   static const String _tableName = 'diary_entries';
 
   Database? _database;
@@ -28,6 +28,7 @@ class DiaryDatabase {
       path,
       version: _databaseVersion,
       onCreate: _createDatabase,
+      onUpgrade: _onUpgrade, 
     );
   }
 
@@ -36,10 +37,33 @@ class DiaryDatabase {
     await db.execute('''
       CREATE TABLE $_tableName (
         date TEXT PRIMARY KEY,
-        content TEXT NOT NULL,
-        emotion TEXT NOT NULL
-      )
+        content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
+        emotion TEXT NOT NULL,
+        userId TEXT
+      );
     ''');
+  }
+
+  /// 데이터베이스 업그레이드 로직 (스키마 변경 시 사용)
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // 버전 1에서 버전 2로 업그레이드: userId 컬럼 추가
+      await db.execute('ALTER TABLE $_tableName ADD COLUMN userId TEXT;');
+    }
+    if (oldVersion < 3) {
+      // 버전 2에서 버전 3으로 업그레이드: content 컬럼에 길이 제한 CHECK 제약조건 추가
+      await db.execute('''
+        CREATE TABLE temp_diary_entries (
+            date TEXT PRIMARY KEY,
+            content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
+            emotion TEXT NOT NULL,
+            userId TEXT
+        );
+      ''');
+      await db.execute('INSERT INTO temp_diary_entries SELECT date, content, emotion, userId FROM $_tableName;');
+      await db.execute('DROP TABLE $_tableName;');
+      await db.execute('ALTER TABLE temp_diary_entries RENAME TO $_tableName;');
+    }
   }
 
   /// 일기를 데이터베이스에 삽입합니다. 같은 날짜가 존재하면 업데이트합니다.
@@ -65,6 +89,21 @@ class DiaryDatabase {
     });
   }
 
+  /// 특정 사용자 ID의 모든 일기를 조회합니다.
+  Future<List<DiaryEntry>> getAllDiariesByUserId(String userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'date DESC',
+    );
+
+    return List.generate(maps.length, (i) {
+      return DiaryEntry.fromMap(maps[i]);
+    });
+  }
+
   /// 특정 날짜의 일기를 조회합니다.
   Future<DiaryEntry?> getDiaryByDate(DateTime date) async {
     final db = await database;
@@ -72,6 +111,22 @@ class DiaryDatabase {
       _tableName,
       where: 'date = ?',
       whereArgs: [date.toIso8601String()],
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return DiaryEntry.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  /// 특정 날짜와 사용자 ID의 일기를 조회합니다.
+  Future<DiaryEntry?> getDiaryByDateAndUserId(DateTime date, String userId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'date = ? AND userId = ?',
+      whereArgs: [date.toIso8601String(), userId],
       limit: 1,
     );
 
@@ -114,6 +169,29 @@ class DiaryDatabase {
       whereArgs: [
         startDate.toIso8601String(),
         endDate.toIso8601String(),
+      ],
+      orderBy: 'date ASC',
+    );
+
+    return List.generate(maps.length, (i) {
+      return DiaryEntry.fromMap(maps[i]);
+    });
+  }
+
+  /// 특정 사용자 ID와 날짜 범위로 일기를 조회합니다.
+  Future<List<DiaryEntry>> getDiariesByDateRangeAndUserId(
+    DateTime startDate,
+    DateTime endDate,
+    String userId,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'date BETWEEN ? AND ? AND userId = ?',
+      whereArgs: [
+        startDate.toIso8601String(),
+        endDate.toIso8601String(),
+        userId,
       ],
       orderBy: 'date ASC',
     );

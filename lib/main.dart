@@ -3,54 +3,61 @@ import 'package:yes_diary/screens/splash_screen.dart';
 import 'package:yes_diary/screens/onboarding_screen.dart';
 import 'package:yes_diary/screens/main_screen.dart';
 import 'package:yes_diary/services/database_service.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 
 void main() async {
-  // Flutter 바인딩 초기화
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // 데이터베이스 초기화
+
+  // Initialize Database Service
   try {
     await DatabaseService.instance.initialize();
     print('앱 시작: 데이터베이스 초기화 성공');
   } catch (e) {
     print('앱 시작: 데이터베이스 초기화 실패 - $e');
   }
-  
+
+  // Initialize SecureStorageService and manage user ID and created_at
+  final secureStorageService = SecureStorageService();
+  const uuid = Uuid();
+  final now = DateTime.now();
+  final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+  String? userId = await secureStorageService.getUserId();
+  String? createdAt = await secureStorageService.getCreatedAt();
+
+  if (userId == null) {
+    userId = uuid.v4();
+    await secureStorageService.saveUserId(userId);
+    print('새 사용자 ID 생성 및 저장: $userId');
+  } else {
+    print('기존 사용자 ID 로드: $userId');
+  }
+
+  if (createdAt == null) {
+    createdAt = formatter.format(now);
+    await secureStorageService.saveCreatedAt(createdAt);
+    print('새 createdAt 생성 및 저장: $createdAt');
+  } else {
+    print('기존 createdAt 로드: $createdAt');
+  }
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Yes Diary',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       home: MainScreen(),
-      routes: {
-        // '/onboarding': (context) => OnboardingScreen(),
-        // '/main': (context) => MainScreen(),
-      },
     );
   }
 }

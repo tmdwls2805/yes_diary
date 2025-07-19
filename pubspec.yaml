@@ -49,6 +49,7 @@ dependencies:
   json_annotation: ^4.9.0
   sqflite: ^2.3.3
   sqflite_common_ffi: ^2.3.3 # Windows/Linux/macOS 지원
+  uuid: ^4.4.0
   carousel_slider: ^4.2.1
   flutter_localizations:
     sdk: flutter

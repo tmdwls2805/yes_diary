@@ -7,7 +7,7 @@ void main() {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'happy';
+      const emotion = 'green';
 
       // When
       final entry = DiaryEntry(
@@ -26,7 +26,7 @@ void main() {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'happy';
+      const emotion = 'green';
       final entry = DiaryEntry(
         date: date,
         content: content,
@@ -46,7 +46,7 @@ void main() {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'happy';
+      const emotion = 'green';
       final map = {
         'date': date.toIso8601String(),
         'content': content,
@@ -64,7 +64,7 @@ void main() {
 
     test('유효한 감정 이미지 타입 검증', () {
       // Given
-      final validEmotions = ['happy', 'sad', 'angry', 'excited', 'calm'];
+      final validEmotions = ['green', 'blue', 'red', 'yellow', 'pink'];
       final date = DateTime(2024, 1, 1);
       const content = '테스트 내용';
 
@@ -86,7 +86,7 @@ void main() {
       final date = DateTime(2024, 1, 1);
       const content1 = '첫 번째 일기';
       const content2 = '두 번째 일기';
-      const emotion = 'happy';
+      const emotion = 'green';
 
       final entry1 = DiaryEntry(
         date: date,

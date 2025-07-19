@@ -2,8 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
+import 'package:yes_diary/services/database_service.dart'; // DatabaseService import
+import 'package:yes_diary/screens/diary_view_screen.dart'; // DiaryViewScreen import
 
 class CustomCalendar extends StatefulWidget {
+  final DateTime? initialDate;
+  final String? userId; // userId 필드 추가
+
+  const CustomCalendar({Key? key, this.initialDate, this.userId}) : super(key: key);
+
   @override
   _CustomCalendarState createState() => _CustomCalendarState();
 }
@@ -23,15 +30,20 @@ class _CustomCalendarState extends State<CustomCalendar> {
     super.initState();
     final DateTime now = DateTime.now();
 
-    // PageView의 시작점을 현재 월로 설정
-    _firstMonth = DateTime.utc(now.year, now.month, 1);
-    int initialPage = 0; // 현재 월이 첫 페이지가 되도록 설정
+    // initialDate가 제공되면 해당 날짜로, 아니면 현재 날짜로 설정
+    final DateTime effectiveDate = widget.initialDate ?? now;
 
+    // PageView의 시작점을 effectiveDate의 월로 설정
+    _firstMonth = DateTime.utc(effectiveDate.year, effectiveDate.month, 1);
+    
+    // _focusedDay도 effectiveDate의 월로 설정
+    _focusedDay = DateTime(effectiveDate.year, effectiveDate.month, 1);
+    
+    // 현재 월이 첫 페이지가 되도록 초기 페이지 계산
+    int initialPage = DateTime.now().month - _firstMonth.month + (DateTime.now().year - _firstMonth.year) * 12;
     _pageController = PageController(initialPage: initialPage);
 
-    _focusedDay = DateTime(now.year, now.month, 1);
-
-    _selectedDay = now;
+    _selectedDay = now; // 항상 오늘 날짜가 선택된 상태로 시작
   }
 
   @override
@@ -232,22 +244,48 @@ class _CustomCalendarState extends State<CustomCalendar> {
                     isPreviousMonthDay: isPreviousMonthDay,
                     squareCellSize: squareCellSize,
                     textSizedBoxHeight: textSizedBoxHeight,
-                    // 현재 월의 날짜인 경우에만 onTap을 활성화합니다.
                     onTap: isCurrentMonthDay
-                        ? () {
+                        ? () async { // 비동기 함수로 변경
                             setState(() {
                               _selectedDay = day;
                             });
-                            // diary_write_screen으로 이동
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DiaryWriteScreen(selectedDate: day),
-                              ),
-                            );
+
+                            // userId가 유효한 경우에만 일기 존재 여부 확인
+                            if (widget.userId != null) {
+                              final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
+                              
+                              if (hasDiary) {
+                                // 일기 조회 화면으로 이동
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DiaryViewScreen(selectedDate: day),
+                                  ),
+                                );
+                                print('일기 있음: ${day.toIso8601String()}');
+                              } else {
+                                // 새 일기 작성 화면으로 이동
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DiaryWriteScreen(selectedDate: day),
+                                  ),
+                                );
+                                print('일기 없음: ${day.toIso8601String()}');
+                              }
+                            } else {
+                                // userId가 없으면 기본 동작 (일기 작성 화면으로 이동)
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        DiaryWriteScreen(selectedDate: day),
+                                  ),
+                                );
+                                print('userId 없음. 일기 작성 화면으로 이동.');
+                            }
                           }
-                        : null, // 이전 달이나 다음 달 날짜는 클릭 비활성화
+                        : null,
                   );
                 },
                 itemCount: fixedTotalCells,
