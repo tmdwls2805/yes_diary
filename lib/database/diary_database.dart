@@ -110,7 +110,7 @@ class DiaryDatabase {
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
       where: 'date = ?',
-      whereArgs: [date.toIso8601String()],
+      whereArgs: [DateTime(date.year, date.month, date.day).toIso8601String()],
       limit: 1,
     );
 
@@ -126,7 +126,7 @@ class DiaryDatabase {
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
       where: 'date = ? AND userId = ?',
-      whereArgs: [date.toIso8601String(), userId],
+      whereArgs: [DateTime(date.year, date.month, date.day).toIso8601String(), userId],
       limit: 1,
     );
 
@@ -143,7 +143,7 @@ class DiaryDatabase {
       _tableName,
       entry.toMap(),
       where: 'date = ?',
-      whereArgs: [entry.date.toIso8601String()],
+      whereArgs: [DateTime(entry.date.year, entry.date.month, entry.date.day).toIso8601String()],
     );
   }
 
@@ -167,8 +167,8 @@ class DiaryDatabase {
       _tableName,
       where: 'date BETWEEN ? AND ?',
       whereArgs: [
-        startDate.toIso8601String(),
-        endDate.toIso8601String(),
+        DateTime(startDate.year, startDate.month, startDate.day).toIso8601String(),
+        DateTime(endDate.year, endDate.month, endDate.day).toIso8601String(),
       ],
       orderBy: 'date ASC',
     );
@@ -189,8 +189,8 @@ class DiaryDatabase {
       _tableName,
       where: 'date BETWEEN ? AND ? AND userId = ?',
       whereArgs: [
-        startDate.toIso8601String(),
-        endDate.toIso8601String(),
+        DateTime(startDate.year, startDate.month, startDate.day).toIso8601String(),
+        DateTime(endDate.year, endDate.month, endDate.day).toIso8601String(),
         userId,
       ],
       orderBy: 'date ASC',
@@ -209,4 +209,4 @@ class DiaryDatabase {
       _database = null;
     }
   }
-} 
+}

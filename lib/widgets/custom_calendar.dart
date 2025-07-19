@@ -6,6 +6,7 @@ import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/screens/diary_view_screen.dart';
 import 'package:yes_diary/models/diary_entry.dart'; // DiaryEntry import 추가
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:yes_diary/core/constants/app_image.dart';
 
 class CustomCalendar extends StatefulWidget {
   final DateTime? initialDate;
@@ -28,14 +29,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
   Map<DateTime, String> _diariesEmotionMap = {}; // 날짜별 감정 저장 맵
 
-  // 감정 이름과 SVG 경로 매핑 (DiaryWriteScreen과 동일하게)
-  final Map<String, String> _emotionSvgPaths = {
-    'angry': 'assets/emotion/red.svg',
-    'pensive': 'assets/emotion/yellow.svg',
-    'neutral': 'assets/emotion/blue.svg',
-    'sad': 'assets/emotion/pink.svg',
-    'happy': 'assets/emotion/green.svg',
-  };
+  // 감정 이름과 SVG 경로 매핑 (AppImages에서 가져옴)
+  final Map<String, String> _emotionSvgPaths = AppImages.emotionFaceSvgPaths;
 
   @override
   void initState() {
@@ -418,8 +413,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
           height: squareCellSize,
           fit: BoxFit.contain,
         );
-        // 감정 SVG가 있으면 배경색을 투명으로, 글자색을 검정으로
-        backgroundColor = Colors.transparent; // 배경을 감정 SVG로 대체
+        // 감정 SVG가 있으면 배경색을 투명으로, 글자색을 흰색으로
+        backgroundColor = Colors.transparent;
       }
     }
 

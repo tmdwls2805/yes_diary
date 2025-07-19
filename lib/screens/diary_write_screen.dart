@@ -6,6 +6,7 @@ import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // SVG 사용을 위한 import
 import 'package:intl/intl.dart'; // 날짜 포맷팅을 위한 import
 import 'package:flutter/services.dart'; // MaxLengthEnforcement를 위한 import 추가
+import 'package:yes_diary/core/constants/app_image.dart'; // 추가
 
 class DiaryWriteScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -20,15 +21,7 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
   final TextEditingController _contentController = TextEditingController();
   String? _selectedEmotion;
   String? _currentUserId;
-  String _emotionQuestionText = '오늘 해소할 감정은 무엇인가요?'; // 동적으로 변경될 텍스트
-
-  final List<Map<String, String>> _emotionIcons = [
-    {'name': 'red', 'path': 'assets/emotion/red.svg', 'korean': '화남'},
-    {'name': 'yellow', 'path': 'assets/emotion/yellow.svg', 'korean': '시무룩'},
-    {'name': 'blue', 'path': 'assets/emotion/blue.svg', 'korean': '평온'},
-    {'name': 'pink', 'path': 'assets/emotion/pink.svg', 'korean': '슬픔'},
-    {'name': 'green', 'path': 'assets/emotion/green.svg', 'korean': '기쁨'},
-  ];
+  // String _emotionQuestionText = '오늘 해소할 감정은 무엇인가요?'; // 이 변수 제거
 
   @override
   void initState() {
@@ -38,7 +31,7 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
 
   Future<void> _loadUserId() async {
     _currentUserId = await SecureStorageService().getUserId();
-    setState(() {}); 
+    setState(() {});
   }
 
   Future<void> _saveDiary() async {
@@ -126,13 +119,13 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center, // 가운데 정렬
-                  children: _emotionIcons.map((emotionMap) {
-                    final emotionName = emotionMap['name']!;
-                    final svgPath = emotionMap['path']!;
-                    final koreanName = emotionMap['korean']!;
+                  children: AppImages.emotionFaceSvgPaths.entries.map((entry) {
+                    final emotionName = entry.key;
+                    final svgPath = entry.value;
+                    // final koreanName = AppImages.emotionKoreanNames[emotionName]!;
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2.0), // 4px 간격을 위해 각 아이템에 2px씩 적용
-                      child: _buildEmotionOption(emotionName, svgPath, koreanName), // 한글 이름 전달
+                      child: _buildEmotionOption(emotionName, svgPath), // 한글 이름 전달
                     );
                   }).toList(),
                 ),
@@ -142,7 +135,9 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 28.0),
                   child: Text(
-                    _emotionQuestionText, // 동적 텍스트 사용
+                    _selectedEmotion == null
+                        ? '오늘 해소할 감정은 무엇인가요?' // 감정 미선택 시 기본 문장
+                        : AppImages.emotionQuestionTexts[_selectedEmotion]!, // 선택된 감정에 따라 동적 문장 사용
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
@@ -185,13 +180,12 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
     );
   }
 
-  Widget _buildEmotionOption(String emotionName, String svgPath, String koreanName) {
+  Widget _buildEmotionOption(String emotionName, String svgPath) {
     final isSelected = _selectedEmotion == emotionName;
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedEmotion = emotionName;
-          _emotionQuestionText = '오늘 해소할 감정은 ${koreanName}입니다.'; // 텍스트 변경
         });
       },
       child: Transform.translate(
