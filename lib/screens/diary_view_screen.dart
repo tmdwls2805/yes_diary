@@ -108,6 +108,20 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     return !nextDay.isAfter(DateTime(today.year, today.month, today.day));
   }
 
+  void _handleSwipeLeft() {
+    if (_canNavigateToNext()) {
+      final nextDay = _currentDate.add(const Duration(days: 1));
+      _navigateToDate(nextDay);
+    }
+  }
+
+  void _handleSwipeRight() {
+    if (_canNavigateToPrevious()) {
+      final previousDay = _currentDate.subtract(const Duration(days: 1));
+      _navigateToDate(previousDay);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,6 +142,14 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
               ? GestureDetector(
                   onTap: () {
                     FocusScope.of(context).unfocus();
+                  },
+                  onHorizontalDragEnd: (details) {
+                    const double sensitivity = 300.0;
+                    if (details.velocity.pixelsPerSecond.dx > sensitivity) {
+                      _handleSwipeRight();
+                    } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                      _handleSwipeLeft();
+                    }
                   },
                   child: Container(
                     color: const Color(0xFF1A1A1A),
@@ -151,46 +173,58 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           imageHeight: 142,
                         ),
                         const SizedBox(height: 28.0),
-                        Center(
-                          child: SizedBox(
-                            width: 264,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
-                                  ),
-                                ).then((_) {
-                                  _loadDiaryEntry();
-                                });
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF4646),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                padding: EdgeInsets.zero,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Text(
-                                    '일기 작성하기',
-                                    style: TextStyle(
-                                      color: Color(0xFFFFFFFF),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: GestureDetector(
+                            onHorizontalDragEnd: (details) {
+                              const double sensitivity = 300.0;
+                              if (details.velocity.pixelsPerSecond.dx > sensitivity) {
+                                _handleSwipeRight();
+                              } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                                _handleSwipeLeft();
+                              }
+                            },
+                            child: Center(
+                              child: SizedBox(
+                                width: 264,
+                                height: 56,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
+                                      ),
+                                    ).then((_) {
+                                      _loadDiaryEntry();
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFF4646),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
                                     ),
+                                    padding: EdgeInsets.zero,
                                   ),
-                                  const SizedBox(width: 8),
-                                  SvgPicture.asset(
-                                    'assets/icon/write_diary.svg',
-                                    width: 24,
-                                    height: 24,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Text(
+                                        '일기 작성하기',
+                                        style: TextStyle(
+                                          color: Color(0xFFFFFFFF),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      SvgPicture.asset(
+                                        'assets/icon/write_diary.svg',
+                                        width: 24,
+                                        height: 24,
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
@@ -203,6 +237,14 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
               : GestureDetector(
                   onTap: () {
                     FocusScope.of(context).unfocus();
+                  },
+                  onHorizontalDragEnd: (details) {
+                    const double sensitivity = 300.0;
+                    if (details.velocity.pixelsPerSecond.dx > sensitivity) {
+                      _handleSwipeRight();
+                    } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                      _handleSwipeLeft();
+                    }
                   },
                   child: Container(
                     color: const Color(0xFF1A1A1A),
@@ -228,9 +270,19 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: DiaryContentField(
-                              controller: _contentController,
-                              isReadOnly: true,
+                            child: GestureDetector(
+                              onPanEnd: (details) {
+                                const double sensitivity = 100.0;
+                                if (details.velocity.pixelsPerSecond.dx > sensitivity) {
+                                  _handleSwipeRight();
+                                } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                                  _handleSwipeLeft();
+                                }
+                              },
+                              child: DiaryContentField(
+                                controller: _contentController,
+                                isReadOnly: true,
+                              ),
                             ),
                           ),
                         ),
