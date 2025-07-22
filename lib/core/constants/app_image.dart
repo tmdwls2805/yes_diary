@@ -23,7 +23,7 @@ class AppImages {
     'yellow': 'assets/emotion/yellow_body.svg',
     'blue': 'assets/emotion/blue_body.svg',
     'pink': 'assets/emotion/pink_body.svg',
-    'green': 'assets/emotion/gray_body.svg',
+    'green': 'assets/emotion/green_body.svg',
     // 여기에 추가될 색상 값들을 추가할 수 있습니다.
   };
 
