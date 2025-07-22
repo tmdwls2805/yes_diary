@@ -21,8 +21,4 @@ class SecureStorageService {
   Future<String?> getCreatedAt() async {
     return await _storage.read(key: StorageKeys.createdAt);
   }
-
-  Future<void> deleteAll() async {
-    await _storage.deleteAll();
-  }
 } 

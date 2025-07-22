@@ -9,8 +9,9 @@ import 'package:yes_diary/widgets/diary_content_field.dart';
 
 class DiaryWriteScreen extends StatefulWidget {
   final DateTime selectedDate;
+  final DiaryEntry? existingEntry;
 
-  const DiaryWriteScreen({Key? key, required this.selectedDate}) : super(key: key);
+  const DiaryWriteScreen({Key? key, required this.selectedDate, this.existingEntry}) : super(key: key);
 
   @override
   _DiaryWriteScreenState createState() => _DiaryWriteScreenState();
@@ -25,11 +26,20 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
   void initState() {
     super.initState();
     _loadUserId();
+    _loadExistingData();
   }
 
   Future<void> _loadUserId() async {
     _currentUserId = await SecureStorageService().getUserId();
     setState(() {});
+  }
+
+  void _loadExistingData() {
+    if (widget.existingEntry != null) {
+      _contentController.text = widget.existingEntry!.content;
+      _selectedEmotion = widget.existingEntry!.emotion;
+      setState(() {});
+    }
   }
 
   Future<void> _saveDiary() async {
@@ -49,14 +59,26 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
       return;
     }
 
-    final newEntry = DiaryEntry(
-      date: widget.selectedDate,
-      content: _contentController.text,
-      emotion: _selectedEmotion!,
-      userId: _currentUserId!,
-    );
+    if (widget.existingEntry != null) {
+      // Update existing diary entry
+      final updatedEntry = DiaryEntry(
+        date: widget.selectedDate,
+        content: _contentController.text,
+        emotion: _selectedEmotion!,
+        userId: _currentUserId!,
+      );
+      await DatabaseService.instance.diaryRepository.updateDiary(updatedEntry);
+    } else {
+      // Create new diary entry
+      final newEntry = DiaryEntry(
+        date: widget.selectedDate,
+        content: _contentController.text,
+        emotion: _selectedEmotion!,
+        userId: _currentUserId!,
+      );
+      await DatabaseService.instance.diaryRepository.insertDiary(newEntry);
+    }
 
-    await DatabaseService.instance.diaryRepository.insertDiary(newEntry);
     Navigator.pop(context, true);
   }
 

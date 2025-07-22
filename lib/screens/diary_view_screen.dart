@@ -133,7 +133,17 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
         rightButtonColor: const Color(0xFFFF4646),
         rightButtonFontWeight: FontWeight.bold,
         onRightPressed: _diaryEntry != null ? () {
-          // TODO: 수정 화면으로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DiaryWriteScreen(
+                selectedDate: _currentDate,
+                existingEntry: _diaryEntry,
+              ),
+            ),
+          ).then((_) {
+            _loadDiaryEntry();
+          });
         } : null,
       ),
       body: _isLoading
@@ -160,7 +170,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                       children: [
                         DiaryBodyWithNavigation(
                           hardcodedImagePath: 'assets/emotion/green_body.svg',
-                          customText: '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\\n이날의 일기를 작성하시겠습니까?',
+                          customText: '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
                           onLeftSwipe: _canNavigateToPrevious() ? () {
                             final previousDay = _currentDate.subtract(const Duration(days: 1));
                             _navigateToDate(previousDay);
@@ -173,63 +183,61 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           imageHeight: 142,
                         ),
                         const SizedBox(height: 28.0),
-                        Expanded(
-                          child: GestureDetector(
-                            onHorizontalDragEnd: (details) {
-                              const double sensitivity = 300.0;
-                              if (details.velocity.pixelsPerSecond.dx > sensitivity) {
-                                _handleSwipeRight();
-                              } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
-                                _handleSwipeLeft();
-                              }
-                            },
-                            child: Center(
-                              child: SizedBox(
-                                width: 264,
-                                height: 56,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
-                                      ),
-                                    ).then((_) {
-                                      _loadDiaryEntry();
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFFF4646),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
+                        GestureDetector(
+                          onHorizontalDragEnd: (details) {
+                            const double sensitivity = 300.0;
+                            if (details.velocity.pixelsPerSecond.dx > sensitivity) {
+                              _handleSwipeRight();
+                            } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                              _handleSwipeLeft();
+                            }
+                          },
+                          child: Center(
+                            child: SizedBox(
+                              width: 264,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
                                     ),
-                                    padding: EdgeInsets.zero,
+                                  ).then((_) {
+                                    _loadDiaryEntry();
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF4646),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text(
-                                        '일기 작성하기',
-                                        style: TextStyle(
-                                          color: Color(0xFFFFFFFF),
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      '일기 작성하기',
+                                      style: TextStyle(
+                                        color: Color(0xFFFFFFFF),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(width: 8),
-                                      SvgPicture.asset(
-                                        'assets/icon/write_diary.svg',
-                                        width: 24,
-                                        height: 24,
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    SvgPicture.asset(
+                                      'assets/icon/write_diary.svg',
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 42.0),
+                        Expanded(child: Container()),
                       ],
                     ),
                   ),
@@ -271,8 +279,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: GestureDetector(
-                              onPanEnd: (details) {
-                                const double sensitivity = 100.0;
+                              onHorizontalDragEnd: (details) {
+                                const double sensitivity = 300.0;
                                 if (details.velocity.pixelsPerSecond.dx > sensitivity) {
                                   _handleSwipeRight();
                                 } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
