@@ -8,6 +8,9 @@ class DiaryBodyWithNavigation extends StatelessWidget {
   final VoidCallback? onRightSwipe;
   final double imageWidth;
   final double imageHeight;
+  final String? hardcodedImagePath;
+  final String? customText;
+  final bool showNavigation;
 
   const DiaryBodyWithNavigation({
     Key? key,
@@ -16,6 +19,9 @@ class DiaryBodyWithNavigation extends StatelessWidget {
     this.onRightSwipe,
     this.imageWidth = 92,
     this.imageHeight = 142,
+    this.hardcodedImagePath,
+    this.customText,
+    this.showNavigation = true,
   }) : super(key: key);
 
   @override
@@ -30,15 +36,15 @@ class DiaryBodyWithNavigation extends StatelessWidget {
               // Center body image
               Center(
                 child: SvgPicture.asset(
-                  emotion != null 
+                  hardcodedImagePath ?? (emotion != null 
                     ? (AppImages.emotionBodySvgPaths[emotion] ?? 'assets/emotion/gray_body.svg')
-                    : 'assets/emotion/gray_body.svg',
+                    : 'assets/emotion/gray_body.svg'),
                   width: imageWidth,
                   height: imageHeight,
                 ),
               ),
               // Left swipe button
-              if (onLeftSwipe != null)
+              if (showNavigation)
                 Positioned(
                   left: 16,
                   top: 0,
@@ -56,6 +62,9 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                             'assets/button/swipe.svg',
                             width: 42,
                             height: 42,
+                            colorFilter: onLeftSwipe == null 
+                                ? const ColorFilter.mode(Colors.grey, BlendMode.srcIn)
+                                : null,
                           ),
                         ),
                       ),
@@ -63,7 +72,7 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                   ),
                 ),
               // Right swipe button
-              if (onRightSwipe != null)
+              if (showNavigation)
                 Positioned(
                   right: 16,
                   top: 0,
@@ -79,6 +88,9 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                           'assets/button/swipe.svg',
                           width: 42,
                           height: 42,
+                          colorFilter: onRightSwipe == null 
+                              ? const ColorFilter.mode(Colors.grey, BlendMode.srcIn)
+                              : null,
                         ),
                       ),
                     ),
@@ -88,7 +100,21 @@ class DiaryBodyWithNavigation extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20.0),
-        if (emotion != null)
+        if (customText != null)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                customText!,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else if (emotion != null)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),

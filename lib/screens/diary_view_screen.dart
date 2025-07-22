@@ -5,11 +5,13 @@ import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_body_with_navigation.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
+import 'package:intl/intl.dart';
 
 class DiaryViewScreen extends StatefulWidget {
   final DateTime selectedDate;
+  final DateTime? createdAt;
 
-  const DiaryViewScreen({Key? key, required this.selectedDate}) : super(key: key);
+  const DiaryViewScreen({Key? key, required this.selectedDate, this.createdAt}) : super(key: key);
 
   @override
   _DiaryViewScreenState createState() => _DiaryViewScreenState();
@@ -20,22 +22,50 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
   String? _currentUserId;
   bool _isLoading = true;
   final TextEditingController _contentController = TextEditingController();
+  DateTime? _joinDate;
+  late DateTime _currentDate;
 
   @override
   void initState() {
     super.initState();
+    _currentDate = widget.selectedDate;
+    _joinDate = widget.createdAt;
     _loadDiaryEntry();
   }
 
   Future<void> _loadDiaryEntry() async {
     _currentUserId = await SecureStorageService().getUserId();
+    
+    // createdAt이 parameter로 전달되지 않은 경우에만 storage에서 로드
+    if (_joinDate == null) {
+      final createdAtString = await SecureStorageService().getCreatedAt();
+      print('DEBUG: createdAtString from storage: $createdAtString');
+      
+      if (createdAtString != null && createdAtString.isNotEmpty) {
+        try {
+          _joinDate = DateTime.parse(createdAtString);
+          print('DEBUG: Parsed join date from storage: $_joinDate');
+        } catch (e) {
+          print('DEBUG: Error parsing createdAtString: $e, using fallback');
+          _joinDate = DateTime.now().subtract(const Duration(days: 30));
+        }
+      } else {
+        print('DEBUG: createdAtString is null or empty, using default join date (30 days ago)');
+        _joinDate = DateTime.now().subtract(const Duration(days: 30));
+      }
+    } else {
+      print('DEBUG: Using createdAt from parameter: $_joinDate');
+    }
+    
     if (_currentUserId != null) {
       _diaryEntry = await DatabaseService.instance.diaryRepository.getDiaryByDateAndUserId(
-        widget.selectedDate,
+        _currentDate,
         _currentUserId!,
       );
       if (_diaryEntry != null) {
         _contentController.text = _diaryEntry!.content;
+      } else {
+        _contentController.clear();
       }
     }
     setState(() {
@@ -50,12 +80,38 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
   }
 
 
+  Future<void> _navigateToDate(DateTime newDate) async {
+    setState(() {
+      _isLoading = true;
+      _currentDate = newDate;
+    });
+    await _loadDiaryEntry();
+  }
+
+  bool _canNavigateToPrevious() {
+    if (_joinDate == null) {
+      print('DEBUG: _joinDate is null, cannot navigate to previous');
+      return false;
+    }
+    final previousDay = _currentDate.subtract(const Duration(days: 1));
+    final joinDateNormalized = DateTime(_joinDate!.year, _joinDate!.month, _joinDate!.day);
+    final canNavigate = !previousDay.isBefore(joinDateNormalized);
+    print('DEBUG: Current date: $_currentDate, Previous day: $previousDay, Join date: $joinDateNormalized, Can navigate: $canNavigate');
+    return canNavigate;
+  }
+
+  bool _canNavigateToNext() {
+    final nextDay = _currentDate.add(const Duration(days: 1));
+    final today = DateTime.now();
+    return !nextDay.isAfter(DateTime(today.year, today.month, today.day));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: DiaryHeader(
-        selectedDate: widget.selectedDate,
+        selectedDate: _currentDate,
         leftButtonText: '닫기',
         rightButtonText: _diaryEntry != null ? '수정' : null,
         rightButtonColor: const Color(0xFFFF4646),
@@ -86,12 +142,14 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                       children: [
                         DiaryBodyWithNavigation(
                           emotion: _diaryEntry!.emotion,
-                          onLeftSwipe: () {
-                            // TODO: Navigate to previous day
-                          },
-                          onRightSwipe: () {
-                            // TODO: Navigate to next day
-                          },
+                          onLeftSwipe: _canNavigateToPrevious() ? () {
+                            final previousDay = _currentDate.subtract(const Duration(days: 1));
+                            _navigateToDate(previousDay);
+                          } : null,
+                          onRightSwipe: _canNavigateToNext() ? () {
+                            final nextDay = _currentDate.add(const Duration(days: 1));
+                            _navigateToDate(nextDay);
+                          } : null,
                           imageWidth: 92,
                           imageHeight: 142,
                         ),
