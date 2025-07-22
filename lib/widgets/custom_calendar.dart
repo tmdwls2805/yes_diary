@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
-import 'package:yes_diary/screens/diary_prompt_screen.dart';
 import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/screens/diary_view_screen.dart';
 import 'package:yes_diary/models/diary_entry.dart'; // DiaryEntry import 추가
@@ -345,14 +344,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                     ).then((_) => _loadDiariesForMonth(_focusedDay));
                                     print('오늘 날짜 일기 없음 - 작성 화면으로: ${day.toIso8601String()}');
                                   } else {
-                                    // 오늘이 아닌 날짜이면서 일기가 없으면 유도 화면으로
+                                    // 오늘이 아닌 날짜이면서 일기가 없으면 통합된 화면으로 (프롬프트 표시)
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => DiaryPromptScreen(selectedDate: day, createdAt: widget.initialDate),
+                                        builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
                                       ),
                                     ).then((_) => _loadDiariesForMonth(_focusedDay));
-                                    print('과거 날짜 일기 없음 - 유도 화면으로: ${day.toIso8601String()}');
+                                    print('과거 날짜 일기 없음 - 통합 화면으로: ${day.toIso8601String()}');
                                   }
                                 }
                               } else {

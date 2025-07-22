@@ -5,7 +5,9 @@ import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_body_with_navigation.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
+import 'package:yes_diary/screens/diary_write_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class DiaryViewScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -94,9 +96,9 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
       return false;
     }
     final previousDay = _currentDate.subtract(const Duration(days: 1));
-    final joinDateNormalized = DateTime(_joinDate!.year, _joinDate!.month, _joinDate!.day);
-    final canNavigate = !previousDay.isBefore(joinDateNormalized);
-    print('DEBUG: Current date: $_currentDate, Previous day: $previousDay, Join date: $joinDateNormalized, Can navigate: $canNavigate');
+    final joinMonthFirstDay = DateTime(_joinDate!.year, _joinDate!.month, 1);
+    final canNavigate = !previousDay.isBefore(joinMonthFirstDay);
+    print('DEBUG: Current date: $_currentDate, Previous day: $previousDay, Join month first day: $joinMonthFirstDay, Can navigate: $canNavigate');
     return canNavigate;
   }
 
@@ -123,10 +125,79 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.white))
           : _diaryEntry == null
-              ? const Center(
-                  child: Text(
-                    '해당 날짜에 일기가 없습니다.',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
+              ? GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                  },
+                  child: Container(
+                    color: const Color(0xFF1A1A1A),
+                    width: double.infinity,
+                    height: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DiaryBodyWithNavigation(
+                          hardcodedImagePath: 'assets/emotion/green_body.svg',
+                          customText: '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\\n이날의 일기를 작성하시겠습니까?',
+                          onLeftSwipe: _canNavigateToPrevious() ? () {
+                            final previousDay = _currentDate.subtract(const Duration(days: 1));
+                            _navigateToDate(previousDay);
+                          } : null,
+                          onRightSwipe: _canNavigateToNext() ? () {
+                            final nextDay = _currentDate.add(const Duration(days: 1));
+                            _navigateToDate(nextDay);
+                          } : null,
+                          imageWidth: 92,
+                          imageHeight: 142,
+                        ),
+                        const SizedBox(height: 28.0),
+                        Center(
+                          child: SizedBox(
+                            width: 264,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
+                                  ),
+                                ).then((_) {
+                                  _loadDiaryEntry();
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF4646),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    '일기 작성하기',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFFFFF),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  SvgPicture.asset(
+                                    'assets/icon/write_diary.svg',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 42.0),
+                      ],
+                    ),
                   ),
                 )
               : GestureDetector(

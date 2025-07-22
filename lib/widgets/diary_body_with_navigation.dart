@@ -44,7 +44,7 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                 ),
               ),
               // Left swipe button
-              if (showNavigation)
+              if (showNavigation && onLeftSwipe != null)
                 Positioned(
                   left: 16,
                   top: 0,
@@ -62,9 +62,6 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                             'assets/button/swipe.svg',
                             width: 42,
                             height: 42,
-                            colorFilter: onLeftSwipe == null 
-                                ? const ColorFilter.mode(Colors.grey, BlendMode.srcIn)
-                                : null,
                           ),
                         ),
                       ),
@@ -72,7 +69,7 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                   ),
                 ),
               // Right swipe button
-              if (showNavigation)
+              if (showNavigation && onRightSwipe != null)
                 Positioned(
                   right: 16,
                   top: 0,
@@ -88,9 +85,6 @@ class DiaryBodyWithNavigation extends StatelessWidget {
                           'assets/button/swipe.svg',
                           width: 42,
                           height: 42,
-                          colorFilter: onRightSwipe == null 
-                              ? const ColorFilter.mode(Colors.grey, BlendMode.srcIn)
-                              : null,
                         ),
                       ),
                     ),
