@@ -26,6 +26,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
   late PageController _pageController;
 
   bool _isDropdownActive = false;
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
 
   Map<DateTime, String> _diariesEmotionMap = {}; // 날짜별 감정 저장 맵
 
@@ -35,18 +37,21 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void initState() {
     super.initState();
-    final DateTime now = DateTime.now();
+    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+    // 실제 배포 시에는 DateTime.now()를 사용하거나 유연하게 설정해야 합니다.
+    final DateTime simulatedNow = DateTime(2025, 9, 1); 
 
-    final DateTime effectiveDate = widget.initialDate ?? now;
+    final DateTime effectiveDate = widget.initialDate ?? simulatedNow; // simulatedNow 사용
 
     _firstMonth = DateTime.utc(effectiveDate.year, effectiveDate.month, 1);
     
     _focusedDay = DateTime(effectiveDate.year, effectiveDate.month, 1);
     
-    int initialPage = DateTime.now().month - _firstMonth.month + (DateTime.now().year - _firstMonth.year) * 12;
+    // PageController의 initialPage도 simulatedNow를 기준으로 계산
+    int initialPage = simulatedNow.month - _firstMonth.month + (simulatedNow.year - _firstMonth.year) * 12;
     _pageController = PageController(initialPage: initialPage);
 
-    _selectedDay = now;
+    _selectedDay = simulatedNow; // simulatedNow 사용
 
     _loadDiariesForMonth(_focusedDay); // 초기 월의 일기 로드
   }
@@ -54,7 +59,139 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void dispose() {
     _pageController.dispose();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _showDropdown() {
+    _overlayEntry = _createOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() {
+      _isDropdownActive = true;
+    });
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() {
+      _isDropdownActive = false;
+    });
+  }
+
+  OverlayEntry _createOverlayEntry() {
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    
+    final List<DateTime> monthsList = [];
+    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+    // 실제 배포 시에는 DateTime.now()를 사용하거나 유연하게 설정해야 합니다.
+    final DateTime simulatedNowInDropdown = DateTime(2025, 9, 1); 
+
+    DateTime currentMonthInLoop = _firstMonth;
+    
+    // 드롭다운 목록의 마지막 월: simulatedNowInDropdown을 기준으로 6개월 뒤
+    final DateTime sixMonthsLater = DateTime(simulatedNowInDropdown.year, simulatedNowInDropdown.month + 6, 1);
+    
+    while (currentMonthInLoop.isBefore(sixMonthsLater) ||
+           (currentMonthInLoop.year == sixMonthsLater.year && currentMonthInLoop.month == sixMonthsLater.month)) {
+      monthsList.add(DateTime(currentMonthInLoop.year, currentMonthInLoop.month));
+      currentMonthInLoop = DateTime(currentMonthInLoop.year, currentMonthInLoop.month + 1);
+    }
+
+    int focusedIndex = monthsList.indexWhere((month) => 
+        month.year == _focusedDay.year && month.month == _focusedDay.month);
+    
+    final ScrollController scrollController = ScrollController(
+      initialScrollOffset: focusedIndex > 2 ? (focusedIndex - 2) * 50.0 : 0.0,
+    );
+
+    return OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _removeOverlay,
+              behavior: HitTestBehavior.opaque,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          Positioned(
+            width: 160,
+            child: CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: const Offset(0, 60),
+              child: Material(
+                elevation: 4.0,
+                color: const Color(0xFF494949),
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  height: 250,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFF3F3F3F)),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Scrollbar(
+                    controller: scrollController,
+                    child: ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      itemCount: monthsList.length,
+                      itemBuilder: (context, index) {
+                        final month = monthsList[index];
+                        final isCurrentMonth = month.year == _focusedDay.year && 
+                                             month.month == _focusedDay.month;
+                        
+                        return Column(
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  _focusedDay = month;
+                                  final int targetPageIndex = 
+                                      (month.year - _firstMonth.year) * 12 + 
+                                      (month.month - _firstMonth.month);
+                                  _pageController.jumpToPage(targetPageIndex);
+                                });
+                                _removeOverlay();
+                                _loadDiariesForMonth(month);
+                              },
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '${month.year}. ${month.month.toString().padLeft(2, '0')}',
+                                  style: TextStyle(
+                                    color: isCurrentMonth ? Colors.red : Colors.white,
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (index < monthsList.length - 1)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 9.0),
+                                child: Divider(
+                                  color: const Color(0xFF757575),
+                                  height: 1.0,
+                                  thickness: 1.0,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // 해당 월의 일기 데이터를 로드하는 함수
@@ -107,27 +244,24 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return PopScope(
       canPop: false, // 기본 뒤로가기 동작 방지
       onPopInvoked: (didPop) {
-        // didPop이 true이면 시스템 뒤로가기 동작이 이미 발생했으므로 추가 처리 불필요
         if (didPop) return;
+        
+        // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+        final DateTime simulatedNow = DateTime(2025, 9, 1); 
 
-        final DateTime now = DateTime.now();
-        final DateTime currentMonth = DateTime(now.year, now.month, 1);
+        final DateTime currentMonth = DateTime(simulatedNow.year, simulatedNow.month, 1); // simulatedNow 사용
         final DateTime focusedMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
 
         if (focusedMonth.year != currentMonth.year || focusedMonth.month != currentMonth.month) {
-          // 현재 달이 아닌 경우, 현재 달로 이동
-          final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month);
+          final int targetPageIndex = (simulatedNow.year - _firstMonth.year) * 12 + (simulatedNow.month - _firstMonth.month); // simulatedNow 사용
           _pageController.jumpToPage(targetPageIndex);
           setState(() {
             _focusedDay = currentMonth;
           });
         } else {
-          // 현재 달인 경우, 앱 종료 방지를 위해 Navigator.pop 호출
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           } else {
-            // 이 경우가 발생하면 앱이 종료될 수 있음 (예: 스택의 마지막 라우트)
-            // 필요에 따라 여기에 앱 종료 로직 추가 또는 사용자에게 알림
             print('No more routes to pop. Consider exiting app or showing a message.');
           }
         }
@@ -137,60 +271,67 @@ class _CustomCalendarState extends State<CustomCalendar> {
           Padding(
             padding: const EdgeInsets.only(
                 top: 44.0, bottom: 12.0, left: 16.0, right: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isDropdownActive = !_isDropdownActive; 
-                    });
-                    print('Year tapped! Dropdown state: $_isDropdownActive');
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        DateFormat('yyyy', 'en_US')
-                            .format(_focusedDay),
-                        style: const TextStyle(
-                          fontSize: 36.0,
-                          color: Colors.white,
+            child: CompositedTransformTarget(
+              link: _layerLink,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (_isDropdownActive) {
+                        _removeOverlay();
+                      } else {
+                        _showDropdown();
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_focusedDay.year}',
+                          style: const TextStyle(
+                            fontSize: 36.0,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      SvgPicture.asset(
-                        _isDropdownActive
-                            ? 'assets/icon/calendar_dropdown_active.svg'
-                            : 'assets/icon/calendar_dropdown_inactive.svg',
-                        width: 16,
-                        height: 16,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 0.0),
-                GestureDetector(
-                  onTap: () {
-                    print('Month tapped!');
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text(
-                        DateFormat('MMMM', 'en_US')
-                            .format(_focusedDay)
-                            .toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                        const SizedBox(width: 8.0),
+                        SvgPicture.asset(
+                          _isDropdownActive
+                              ? 'assets/icon/calendar_dropdown_active.svg'
+                              : 'assets/icon/calendar_dropdown_inactive.svg',
+                          width: 16,
+                          height: 16,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 0.0),
+                  GestureDetector(
+                    onTap: () {
+                      if (_isDropdownActive) {
+                        _removeOverlay();
+                      } else {
+                        _showDropdown();
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Text(
+                          DateFormat('MMMM', 'en_US')
+                              .format(_focusedDay)
+                              .toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Container(
@@ -272,9 +413,11 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       isCurrentMonthDay = true;
                     }
 
-                    final bool isToday = day.year == DateTime.now().year &&
-                        day.month == DateTime.now().month &&
-                        day.day == DateTime.now().day;
+                    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+                    final DateTime simulatedNow = DateTime(2025, 9, 1);
+                    final bool isToday = day.year == simulatedNow.year && // simulatedNow 사용
+                        day.month == simulatedNow.month && // simulatedNow 사용
+                        day.day == simulatedNow.day; // simulatedNow 사용
 
                     final bool isSelected = _selectedDay != null &&
                         day.year == _selectedDay!.year &&
@@ -303,7 +446,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                 _selectedDay = day;
                               });
 
-                              final DateTime today = DateTime.now();
+                              // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+                              final DateTime today = DateTime(2025, 9, 1); 
                               final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
                               final DateTime normalizedSelectedDay = DateTime(day.year, day.month, day.day);
 
@@ -400,9 +544,12 @@ class _CustomCalendarState extends State<CustomCalendar> {
     Widget? emotionSvgWidget; 
     Widget? todayIconWidget; // 오늘 날짜 이모티콘 위젯
 
+    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+    final DateTime simulatedNow = DateTime(2025, 9, 1);
+
     // 1. 배경색 및 글자색 결정
     if (isCurrentMonthDay) {
-      if (isToday) {
+      if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day) {
         backgroundColor = const Color(0xFFFF4646);
         textColor = const Color(0xFFFF4646);
       } else {
@@ -434,7 +581,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
     // 3. 오늘 날짜 작성 이모티콘 위젯 설정
     // 일기 감정 이모티콘이 없는 경우에만 표시
-    if (isToday && isCurrentMonthDay && emotion == null) {
+    if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day && isCurrentMonthDay && emotion == null) {
       todayIconWidget = SvgPicture.asset(
         'assets/icon/write_diary.svg',
         width: squareCellSize * 0.8, 
