@@ -157,6 +157,16 @@ class DiaryDatabase {
     );
   }
 
+  /// 특정 날짜와 사용자 ID의 일기를 삭제합니다.
+  Future<void> deleteDiaryByDateAndUserId(DateTime date, String userId) async {
+    final db = await database;
+    await db.delete(
+      _tableName,
+      where: 'date = ? AND userId = ?',
+      whereArgs: [date.toIso8601String(), userId],
+    );
+  }
+
   /// 날짜 범위로 일기를 조회합니다.
   Future<List<DiaryEntry>> getDiariesByDateRange(
     DateTime startDate,

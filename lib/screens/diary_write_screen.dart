@@ -1,49 +1,43 @@
-// lib/screens/diary_write_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/models/diary_entry.dart';
-import 'package:yes_diary/services/database_service.dart';
-import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/providers/diary_provider.dart';
+import 'package:yes_diary/providers/user_provider.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_emotion_selector.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
 
-class DiaryWriteScreen extends StatefulWidget {
+class DiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
   final DiaryEntry? existingEntry;
 
   const DiaryWriteScreen({Key? key, required this.selectedDate, this.existingEntry}) : super(key: key);
 
   @override
-  _DiaryWriteScreenState createState() => _DiaryWriteScreenState();
+  ConsumerState<DiaryWriteScreen> createState() => _DiaryWriteScreenState();
 }
 
-class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
+class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
   final TextEditingController _contentController = TextEditingController();
   String? _selectedEmotion;
-  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId();
     _loadExistingData();
-  }
-
-  Future<void> _loadUserId() async {
-    _currentUserId = await SecureStorageService().getUserId();
-    setState(() {});
   }
 
   void _loadExistingData() {
     if (widget.existingEntry != null) {
       _contentController.text = widget.existingEntry!.content;
       _selectedEmotion = widget.existingEntry!.emotion;
-      setState(() {});
     }
   }
 
   Future<void> _saveDiary() async {
-    if (_currentUserId == null) {
+    final userData = ref.read(userProvider);
+    
+    if (userData.userId == null) {
       print('User ID is null. Cannot save diary.');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('사용자 ID를 불러올 수 없습니다. 다시 시도해 주세요.')),
@@ -59,24 +53,19 @@ class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
       return;
     }
 
+    final diaryEntry = DiaryEntry(
+      date: widget.selectedDate,
+      content: _contentController.text,
+      emotion: _selectedEmotion!,
+      userId: userData.userId!,
+    );
+
     if (widget.existingEntry != null) {
       // Update existing diary entry
-      final updatedEntry = DiaryEntry(
-        date: widget.selectedDate,
-        content: _contentController.text,
-        emotion: _selectedEmotion!,
-        userId: _currentUserId!,
-      );
-      await DatabaseService.instance.diaryRepository.updateDiary(updatedEntry);
+      await ref.read(diaryProvider.notifier).updateDiary(diaryEntry);
     } else {
       // Create new diary entry
-      final newEntry = DiaryEntry(
-        date: widget.selectedDate,
-        content: _contentController.text,
-        emotion: _selectedEmotion!,
-        userId: _currentUserId!,
-      );
-      await DatabaseService.instance.diaryRepository.insertDiary(newEntry);
+      await ref.read(diaryProvider.notifier).saveDiary(diaryEntry);
     }
 
     Navigator.pop(context, true);
