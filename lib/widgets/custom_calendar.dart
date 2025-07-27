@@ -1,35 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
-import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/screens/diary_view_screen.dart';
-import 'package:yes_diary/models/diary_entry.dart'; // DiaryEntry import 추가
+import 'package:yes_diary/models/diary_entry.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:yes_diary/core/constants/app_image.dart';
+import 'package:yes_diary/providers/user_provider.dart';
+import 'package:yes_diary/providers/diary_provider.dart';
+import 'package:yes_diary/providers/calendar_provider.dart';
 
-class CustomCalendar extends StatefulWidget {
+class CustomCalendar extends ConsumerStatefulWidget {
   final DateTime? initialDate;
-  final String? userId;
 
-  const CustomCalendar({Key? key, this.initialDate, this.userId}) : super(key: key);
+  const CustomCalendar({Key? key, this.initialDate}) : super(key: key);
 
   @override
-  _CustomCalendarState createState() => _CustomCalendarState();
+  ConsumerState<CustomCalendar> createState() => _CustomCalendarState();
 }
 
-class _CustomCalendarState extends State<CustomCalendar> {
-  DateTime? _selectedDay;
+class _CustomCalendarState extends ConsumerState<CustomCalendar> {
   late final DateTime _firstMonth;
-
-  late DateTime _focusedDay;
   late PageController _pageController;
-
-  bool _isDropdownActive = false;
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
-
-  Map<DateTime, String> _diariesEmotionMap = {}; // 날짜별 감정 저장 맵
 
   // 감정 이름과 SVG 경로 매핑 (AppImages에서 가져옴)
   final Map<String, String> _emotionSvgPaths = AppImages.emotionFaceSvgPaths;
@@ -37,22 +32,23 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void initState() {
     super.initState();
-    // 실제 현재 날짜와 시간을 사용
-    final DateTime now = DateTime.now(); 
-
+    final DateTime now = DateTime.now();
     final DateTime effectiveDate = widget.initialDate ?? now;
 
     _firstMonth = DateTime.utc(effectiveDate.year, effectiveDate.month, 1);
     
-    _focusedDay = DateTime(effectiveDate.year, effectiveDate.month, 1);
+    // Set initial calendar state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final calendarNotifier = ref.read(calendarProvider.notifier);
+      calendarNotifier.setFocusedDay(DateTime(effectiveDate.year, effectiveDate.month, 1));
+      calendarNotifier.setSelectedDay(now);
+      
+      // Load initial diaries
+      _loadDiariesForMonth(DateTime(effectiveDate.year, effectiveDate.month, 1));
+    });
     
-    // PageController의 initialPage도 실제 now를 기준으로 계산
     int initialPage = now.month - _firstMonth.month + (now.year - _firstMonth.year) * 12;
     _pageController = PageController(initialPage: initialPage);
-
-    _selectedDay = now; // 실제 now 사용
-
-    _loadDiariesForMonth(_focusedDay); // 초기 월의 일기 로드
   }
 
   @override
@@ -65,17 +61,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
   void _showDropdown() {
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
-    setState(() {
-      _isDropdownActive = true;
-    });
+    ref.read(calendarProvider.notifier).openDropdown();
   }
 
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-    setState(() {
-      _isDropdownActive = false;
-    });
+    ref.read(calendarProvider.notifier).closeDropdown();
   }
 
   OverlayEntry _createOverlayEntry() {
@@ -97,8 +89,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
       currentMonthInLoop = DateTime(currentMonthInLoop.year, currentMonthInLoop.month + 1);
     }
 
+    final currentFocusedDay = ref.read(calendarProvider).focusedDay;
     int focusedIndex = monthsList.indexWhere((month) => 
-        month.year == _focusedDay.year && month.month == _focusedDay.month);
+        month.year == currentFocusedDay.year && month.month == currentFocusedDay.month);
     
     final ScrollController scrollController = ScrollController(
       initialScrollOffset: focusedIndex > 2 ? (focusedIndex - 2) * 50.0 : 0.0,
@@ -138,20 +131,18 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       itemCount: monthsList.length,
                       itemBuilder: (context, index) {
                         final month = monthsList[index];
-                        final isCurrentMonth = month.year == _focusedDay.year && 
-                                             month.month == _focusedDay.month;
+                        final isCurrentMonth = month.year == currentFocusedDay.year && 
+                                             month.month == currentFocusedDay.month;
                         
                         return Column(
                           children: [
                             InkWell(
                               onTap: () {
-                                setState(() {
-                                  _focusedDay = month;
-                                  final int targetPageIndex = 
-                                      (month.year - _firstMonth.year) * 12 + 
-                                      (month.month - _firstMonth.month);
-                                  _pageController.jumpToPage(targetPageIndex);
-                                });
+                                ref.read(calendarProvider.notifier).setFocusedDay(month);
+                                final int targetPageIndex = 
+                                    (month.year - _firstMonth.year) * 12 + 
+                                    (month.month - _firstMonth.month);
+                                _pageController.jumpToPage(targetPageIndex);
                                 _removeOverlay();
                                 _loadDiariesForMonth(month);
                               },
@@ -194,40 +185,24 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
   // 해당 월과 인접 월의 일기 데이터를 로드하는 함수
   Future<void> _loadDiariesForMonth(DateTime month) async {
-    if (widget.userId == null) {
+    final userData = ref.read(userProvider);
+    if (userData.userId == null) {
       print('CustomCalendar: User ID is null, cannot load diaries.');
       return;
     }
 
     // 캘린더 그리드에 표시될 수 있는 이전 달의 시작일과 다음 달의 마지막 날짜까지 포함하여 조회 범위를 확장
-    // 일반적으로 한 달 앞뒤로 데이터를 가져오면 충분합니다.
-    final DateTime startOfRange = DateTime(month.year, month.month - 1, 1); // 이전 달의 시작일
-    final DateTime endOfRange = DateTime(month.year, month.month + 2, 0, 23, 59, 59); // 다음 달의 마지막일
+    final DateTime startOfRange = DateTime(month.year, month.month - 1, 1);
+    final DateTime endOfRange = DateTime(month.year, month.month + 2, 0, 23, 59, 59);
 
-    try {
-      final List<DiaryEntry> diaries = await DatabaseService.instance.diaryRepository.getDiariesByDateRangeAndUserId(
-        startOfRange, // 조회 시작 범위 확장
-        endOfRange,   // 조회 종료 범위 확장
-        widget.userId!,
-      );
-      setState(() {
-        _diariesEmotionMap.clear(); // 이전 데이터 클리어
-        for (var entry in diaries) {
-          // 날짜만 포함하도록 정규화 (시간 무시)
-          _diariesEmotionMap[DateTime(entry.date.year, entry.date.month, entry.date.day)] = entry.emotion;
-        }
-        print('CustomCalendar: Loaded diaries for range ${DateFormat('yyyy-MM-dd').format(startOfRange)} to ${DateFormat('yyyy-MM-dd').format(endOfRange)}. Map size: ${_diariesEmotionMap.length}');
-        _diariesEmotionMap.forEach((date, emotion) {
-          print('  Date: ${DateFormat('yyyy-MM-dd').format(date)}, Emotion: $emotion');
-        });
-      });
-    } catch (e) {
-      print('Failed to load diaries for month range: $e');
-    }
+    await ref.read(diaryProvider.notifier).loadDiariesForRange(startOfRange, endOfRange, userData.userId!);
   }
 
   @override
   Widget build(BuildContext context) {
+    final calendarState = ref.watch(calendarProvider);
+    final userData = ref.watch(userProvider);
+    
     final double screenWidth = MediaQuery.of(context).size.width;
     final double crossAxisSpacing = 4.0;
     final double mainAxisSpacing = 2.0;
@@ -238,9 +213,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
     final double textSizedBoxHeight = 24.0;
     final double gridItemHeight = squareCellSize + textSizedBoxHeight + 4.0;
 
-    final double calendarGridHeight =
-        (gridItemHeight + mainAxisSpacing) * 6 - mainAxisSpacing;
-
     return PopScope(
       canPop: false, // 기본 뒤로가기 동작 방지
       onPopInvoked: (didPop) {
@@ -249,15 +221,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
         // 실제 현재 날짜와 시간을 사용
         final DateTime now = DateTime.now(); 
 
-        final DateTime currentMonth = DateTime(now.year, now.month, 1); // 실제 now 사용
-        final DateTime focusedMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
+        final DateTime currentMonth = DateTime(now.year, now.month, 1);
+        final DateTime focusedMonth = DateTime(calendarState.focusedDay.year, calendarState.focusedDay.month, 1);
 
         if (focusedMonth.year != currentMonth.year || focusedMonth.month != currentMonth.month) {
-          final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month); // 실제 now 사용
+          final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month);
           _pageController.jumpToPage(targetPageIndex);
-          setState(() {
-            _focusedDay = currentMonth;
-          });
+          ref.read(calendarProvider.notifier).setFocusedDay(currentMonth);
         } else {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
@@ -278,7 +248,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      if (_isDropdownActive) {
+                      if (calendarState.isDropdownActive) {
                         _removeOverlay();
                       } else {
                         _showDropdown();
@@ -288,7 +258,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
-                          '${_focusedDay.year}',
+                          '${calendarState.focusedDay.year}',
                           style: const TextStyle(
                             fontSize: 36.0,
                             color: Colors.white,
@@ -296,7 +266,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                         ),
                         const SizedBox(width: 8.0),
                         SvgPicture.asset(
-                          _isDropdownActive
+                          calendarState.isDropdownActive
                               ? 'assets/icon/calendar_dropdown_active.svg'
                               : 'assets/icon/calendar_dropdown_inactive.svg',
                           width: 16,
@@ -308,7 +278,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                   const SizedBox(height: 0.0),
                   GestureDetector(
                     onTap: () {
-                      if (_isDropdownActive) {
+                      if (calendarState.isDropdownActive) {
                         _removeOverlay();
                       } else {
                         _showDropdown();
@@ -319,7 +289,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       children: [
                         Text(
                           DateFormat('MMMM', 'en_US')
-                              .format(_focusedDay)
+                              .format(calendarState.focusedDay)
                               .toUpperCase(),
                           style: const TextStyle(
                             fontSize: 16.0,
@@ -360,11 +330,10 @@ class _CustomCalendarState extends State<CustomCalendar> {
               controller: _pageController,
               physics: const BouncingScrollPhysics(),
               onPageChanged: (index) {
-                setState(() {
-                  _focusedDay = DateTime(
-                      _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
-                });
-                _loadDiariesForMonth(_focusedDay); // 월 변경 시 일기 로드
+                final newFocusedDay = DateTime(
+                    _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
+                ref.read(calendarProvider.notifier).setFocusedDay(newFocusedDay);
+                _loadDiariesForMonth(newFocusedDay); // 월 변경 시 일기 로드
               },
               itemBuilder: (context, pageIndex) {
                 final currentMonth = DateTime(
@@ -418,17 +387,16 @@ class _CustomCalendarState extends State<CustomCalendar> {
                         day.month == now.month && 
                         day.day == now.day; 
 
-                    final bool isSelected = _selectedDay != null &&
-                        day.year == _selectedDay!.year &&
-                        day.month == _selectedDay!.month &&
-                        day.day == _selectedDay!.day;
+                    final bool isSelected = calendarState.selectedDay != null &&
+                        day.year == calendarState.selectedDay!.year &&
+                        day.month == calendarState.selectedDay!.month &&
+                        day.day == calendarState.selectedDay!.day;
 
                     final bool isWeekend =
                         day.weekday == DateTime.sunday || day.weekday == DateTime.saturday;
                     
-                    // 현재 날짜를 정규화하여 맵에서 찾기
-                    final DateTime normalizedDay = DateTime(day.year, day.month, day.day);
-                    final String? emotion = _diariesEmotionMap[normalizedDay];
+                    // Get emotion from Riverpod provider
+                    final String? emotion = ref.watch(emotionForDateProvider(day));
 
                     return _buildDayCell(
                       day: day,
@@ -440,9 +408,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       squareCellSize: squareCellSize,
                       textSizedBoxHeight: textSizedBoxHeight,
                       onTap: () async {
-                          setState(() {
-                            _selectedDay = day;
-                          });
+                          ref.read(calendarProvider.notifier).setSelectedDay(day);
 
                           // 실제 현재 날짜와 시간을 사용
                           final DateTime today = DateTime.now(); 
@@ -479,8 +445,8 @@ class _CustomCalendarState extends State<CustomCalendar> {
                             return; // 미래 날짜는 일기 작성/조회로 이동하지 않음
                           }
 
-                          if (widget.userId != null) {
-                            final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
+                          if (userData.userId != null) {
+                            final hasDiary = await ref.read(diaryProvider.notifier).hasDiaryOnDate(day, userData.userId!);
                             
                             if (hasDiary) {
                               Navigator.push(
@@ -488,7 +454,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                 MaterialPageRoute(
                                   builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
                                 ),
-                              ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                              ).then((_) => _loadDiariesForMonth(calendarState.focusedDay)); // 돌아왔을 때 데이터 새로고침
                               print('일기 있음: ${day.toIso8601String()}');
                             } else {
                               // 일기가 없는 경우 오늘 날짜인지 확인
@@ -499,7 +465,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                   MaterialPageRoute(
                                     builder: (context) => DiaryWriteScreen(selectedDate: day),
                                   ),
-                                ).then((_) => _loadDiariesForMonth(_focusedDay));
+                                ).then((_) => _loadDiariesForMonth(calendarState.focusedDay));
                                 print('오늘 날짜 일기 없음 - 작성 화면으로: ${day.toIso8601String()}');
                               } else {
                                 // 오늘이 아닌 날짜이면서 일기가 없으면 통합된 화면으로 (프롬프트 표시)
@@ -508,7 +474,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                   MaterialPageRoute(
                                     builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
                                   ),
-                                ).then((_) => _loadDiariesForMonth(_focusedDay));
+                                ).then((_) => _loadDiariesForMonth(calendarState.focusedDay));
                                 print('과거 날짜 일기 없음 - 통합 화면으로: ${day.toIso8601String()}');
                               }
                             }
@@ -520,7 +486,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                   builder: (context) =>
                                       DiaryWriteScreen(selectedDate: day),
                                 ),
-                              ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                              ).then((_) => _loadDiariesForMonth(calendarState.focusedDay)); // 돌아왔을 때 데이터 새로고침
                               print('userId 없음. 일기 작성 화면으로 이동.');
                           }
                         },

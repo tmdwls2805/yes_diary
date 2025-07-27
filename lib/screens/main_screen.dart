@@ -1,46 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/widgets/custom_calendar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/providers/user_provider.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   @override
-  _MainScreenState createState() {
-    return _MainScreenState();
-  }
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
-  DateTime? _createdAt;
-  String? _currentUserId;
-  bool _isLoading = true; // 로딩 상태 추가
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    final secureStorageService = SecureStorageService();
-    String? createdAtString = await secureStorageService.getCreatedAt();
-    String? userIdString = await secureStorageService.getUserId();
-
-    setState(() {
-      if (createdAtString != null) {
-        _createdAt = DateTime.parse(createdAtString);
-      }
-      _currentUserId = userIdString;
-      _isLoading = false; // 데이터 로드 완료
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final userData = ref.watch(userProvider);
     final double bottomSystemPadding = MediaQuery.of(context).padding.bottom;
     final double desiredNavBarHeight = 80.0; 
 
@@ -90,17 +69,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildBody() {
+    final userData = ref.watch(userProvider);
+    
     switch (_selectedIndex) {
       case 0:
         return Column(
           children: [
             Expanded(
-              // _isLoading이 false이고 _currentUserId가 null이 아닐 때만 CustomCalendar를 렌더링
-              child: _isLoading || _currentUserId == null
+              child: userData.userId == null
                   ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : CustomCalendar(
-                      initialDate: _createdAt,
-                      userId: _currentUserId!, // null이 아님이 보장되므로 ! 사용
+                      initialDate: userData.createdAt,
                     ), 
             ),
           ],
