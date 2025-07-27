@@ -194,20 +194,22 @@ class _CustomCalendarState extends State<CustomCalendar> {
     );
   }
 
-  // 해당 월의 일기 데이터를 로드하는 함수
+  // 해당 월과 인접 월의 일기 데이터를 로드하는 함수
   Future<void> _loadDiariesForMonth(DateTime month) async {
     if (widget.userId == null) {
       print('CustomCalendar: User ID is null, cannot load diaries.');
       return;
     }
 
-    final startOfMonth = DateTime(month.year, month.month, 1);
-    final endOfMonth = DateTime(month.year, month.month + 1, 0, 23, 59, 59);
+    // 캘린더 그리드에 표시될 수 있는 이전 달의 시작일과 다음 달의 마지막 날짜까지 포함하여 조회 범위를 확장
+    // 일반적으로 한 달 앞뒤로 데이터를 가져오면 충분합니다.
+    final DateTime startOfRange = DateTime(month.year, month.month - 1, 1); // 이전 달의 시작일
+    final DateTime endOfRange = DateTime(month.year, month.month + 2, 0, 23, 59, 59); // 다음 달의 마지막일
 
     try {
       final List<DiaryEntry> diaries = await DatabaseService.instance.diaryRepository.getDiariesByDateRangeAndUserId(
-        startOfMonth,
-        endOfMonth,
+        startOfRange, // 조회 시작 범위 확장
+        endOfRange,   // 조회 종료 범위 확장
         widget.userId!,
       );
       setState(() {
@@ -216,13 +218,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
           // 날짜만 포함하도록 정규화 (시간 무시)
           _diariesEmotionMap[DateTime(entry.date.year, entry.date.month, entry.date.day)] = entry.emotion;
         }
-        print('CustomCalendar: Loaded diaries for ${DateFormat('yyyy-MM').format(month)}. Map size: ${_diariesEmotionMap.length}');
+        print('CustomCalendar: Loaded diaries for range ${DateFormat('yyyy-MM-dd').format(startOfRange)} to ${DateFormat('yyyy-MM-dd').format(endOfRange)}. Map size: ${_diariesEmotionMap.length}');
         _diariesEmotionMap.forEach((date, emotion) {
           print('  Date: ${DateFormat('yyyy-MM-dd').format(date)}, Emotion: $emotion');
         });
       });
     } catch (e) {
-      print('Failed to load diaries for month: $e');
+      print('Failed to load diaries for month range: $e');
     }
   }
 
@@ -440,77 +442,91 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       isPreviousMonthDay: isPreviousMonthDay,
                       squareCellSize: squareCellSize,
                       textSizedBoxHeight: textSizedBoxHeight,
-                      onTap: isCurrentMonthDay
-                          ? () async { // 비동기 함수로 변경
-                              setState(() {
-                                _selectedDay = day;
-                              });
+                      onTap: () async { // isCurrentMonthDay 조건 제거
+                          setState(() {
+                            _selectedDay = day;
+                          });
 
-                              // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-                              final DateTime today = DateTime(2025, 9, 1); 
-                              final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
-                              final DateTime normalizedSelectedDay = DateTime(day.year, day.month, day.day);
+                          // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
+                          final DateTime today = DateTime(2025, 9, 1); 
+                          final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
+                          final DateTime normalizedSelectedDay = DateTime(day.year, day.month, day.day);
 
-                              if (normalizedSelectedDay.isAfter(normalizedToday)) {
-                                Fluttertoast.showToast(
-                                  msg: "아직 일기를 작성할 수 없습니다.",
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.CENTER,
-                                  timeInSecForIosWeb: 1,
-                                  backgroundColor: Colors.black,
-                                  textColor: Colors.white,
-                                  fontSize: 16.0,
-                                );
-                                print('미래 날짜 선택됨: ${day.toIso8601String()}');
-                                return; // 미래 날짜는 일기 작성/조회로 이동하지 않음
-                              }
+                          // 새 조건: 선택된 날짜가 _firstMonth (가입한 날짜의 달)의 시작일보다 이전인지 확인
+                          final DateTime firstClickableMonthStart = DateTime(_firstMonth.year, _firstMonth.month, 1);
+                          if (normalizedSelectedDay.isBefore(firstClickableMonthStart)) {
+                              Fluttertoast.showToast(
+                                msg: "가입일 기준 이전 달의 날짜는 선택할 수 없습니다.",
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.CENTER,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black,
+                                textColor: Colors.white,
+                                fontSize: 16.0,
+                              );
+                              print('가입일 이전 날짜 선택됨: ${day.toIso8601String()}');
+                              return; // 클릭 처리 중단
+                          }
 
-                              if (widget.userId != null) {
-                                final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
-                                
-                                if (hasDiary) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
-                                    ),
-                                  ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
-                                  print('일기 있음: ${day.toIso8601String()}');
-                                } else {
-                                  // 일기가 없는 경우 오늘 날짜인지 확인
-                                  if (normalizedSelectedDay.isAtSameMomentAs(normalizedToday)) {
-                                    // 오늘 날짜이면서 일기가 없으면 작성 화면으로
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DiaryWriteScreen(selectedDate: day),
-                                      ),
-                                    ).then((_) => _loadDiariesForMonth(_focusedDay));
-                                    print('오늘 날짜 일기 없음 - 작성 화면으로: ${day.toIso8601String()}');
-                                  } else {
-                                    // 오늘이 아닌 날짜이면서 일기가 없으면 통합된 화면으로 (프롬프트 표시)
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
-                                      ),
-                                    ).then((_) => _loadDiariesForMonth(_focusedDay));
-                                    print('과거 날짜 일기 없음 - 통합 화면으로: ${day.toIso8601String()}');
-                                  }
-                                }
+                          if (normalizedSelectedDay.isAfter(normalizedToday)) {
+                            Fluttertoast.showToast(
+                              msg: "아직 일기를 작성할 수 없습니다.",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.CENTER,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.black,
+                              textColor: Colors.white,
+                              fontSize: 16.0,
+                            );
+                            print('미래 날짜 선택됨: ${day.toIso8601String()}');
+                            return; // 미래 날짜는 일기 작성/조회로 이동하지 않음
+                          }
+
+                          if (widget.userId != null) {
+                            final hasDiary = await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(day, widget.userId!);
+                            
+                            if (hasDiary) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
+                                ),
+                              ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                              print('일기 있음: ${day.toIso8601String()}');
+                            } else {
+                              // 일기가 없는 경우 오늘 날짜인지 확인
+                              if (normalizedSelectedDay.isAtSameMomentAs(normalizedToday)) {
+                                // 오늘 날짜이면서 일기가 없으면 작성 화면으로
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DiaryWriteScreen(selectedDate: day),
+                                  ),
+                                ).then((_) => _loadDiariesForMonth(_focusedDay));
+                                print('오늘 날짜 일기 없음 - 작성 화면으로: ${day.toIso8601String()}');
                               } else {
-                                  // userId가 없는 경우 기본적으로 작성 화면으로
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          DiaryWriteScreen(selectedDate: day),
-                                    ),
-                                  ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
-                                  print('userId 없음. 일기 작성 화면으로 이동.');
+                                // 오늘이 아닌 날짜이면서 일기가 없으면 통합된 화면으로 (프롬프트 표시)
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: widget.initialDate),
+                                  ),
+                                ).then((_) => _loadDiariesForMonth(_focusedDay));
+                                print('과거 날짜 일기 없음 - 통합 화면으로: ${day.toIso8601String()}');
                               }
                             }
-                          : null,
+                          } else {
+                              // userId가 없는 경우 기본적으로 작성 화면으로
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DiaryWriteScreen(selectedDate: day),
+                                ),
+                              ).then((_) => _loadDiariesForMonth(_focusedDay)); // 돌아왔을 때 데이터 새로고침
+                              print('userId 없음. 일기 작성 화면으로 이동.');
+                          }
+                        },
                       emotion: emotion, // 감정 정보 전달
                     );
                   },
@@ -548,6 +564,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     final DateTime simulatedNow = DateTime(2025, 9, 1);
 
     // 1. 배경색 및 글자색 결정
+    // isCurrentMonthDay는 해당 셀이 현재 "보고 있는 달"에 속하는지 여부
     if (isCurrentMonthDay) {
       if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day) {
         backgroundColor = const Color(0xFFFF4646);
@@ -556,17 +573,23 @@ class _CustomCalendarState extends State<CustomCalendar> {
         backgroundColor = const Color(0xFF4C3030);
         textColor = const Color(0xFFC5C5C5);
       }
-    } else if (isPreviousMonthDay) {
-      backgroundColor = const Color(0xFF363636);
-      textColor = const Color(0xFF363636);
-    } else {
-      backgroundColor = Colors.transparent;
-      textColor = Colors.transparent;
+    } else { // 이전 달 또는 다음 달의 날짜
+      backgroundColor = const Color(0xFF363636); // 이전/다음 달 날짜의 배경색
+      textColor = const Color(0xFF363636); // 이전/다음 달 날짜의 글자색
     }
 
     // 2. 감정 SVG 위젯 설정
-    if (emotion != null && isCurrentMonthDay) {
-      final svgPath = _emotionSvgPaths[emotion];
+    // emotion이 null이 아니면 감정 아이콘을 표시
+    if (emotion != null) {
+      String? svgPath;
+      if (isCurrentMonthDay) {
+        // 현재 달에 속하는 날짜는 컬러 감정 아이콘 사용
+        svgPath = _emotionSvgPaths[emotion];
+      } else {
+        // 이전 달 또는 다음 달에 속하는 날짜는 회색 감정 아이콘 사용
+        svgPath = AppImages.emotiongrayFaceSvgPaths[emotion]; // gray SVG 맵 사용
+      }
+      
       if (svgPath != null) {
         emotionSvgWidget = SvgPicture.asset(
           svgPath,
@@ -574,14 +597,19 @@ class _CustomCalendarState extends State<CustomCalendar> {
           height: squareCellSize,
           fit: BoxFit.contain,
         );
-        // 감정 SVG가 있으면 배경색을 투명으로, 글자색을 흰색으로
-        backgroundColor = Colors.transparent;
+        // 감정 SVG가 있으면 배경색을 투명으로 설정하여 아이콘이 보이도록 함
+        backgroundColor = Colors.transparent; 
+        // 현재 달의 날짜인 경우에만 글자색을 흰색으로 변경
+        if (isCurrentMonthDay) {
+          textColor = const Color(0xFFC5C5C5); 
+        }
+        // 이전 달 또는 다음 달의 날짜인 경우 textColor는 초기 설정값(0xFF363636)을 유지
       }
     }
 
     // 3. 오늘 날짜 작성 이모티콘 위젯 설정
-    // 일기 감정 이모티콘이 없는 경우에만 표시
-    if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day && isCurrentMonthDay && emotion == null) {
+    // 오늘 날짜이면서 감정 이모티콘이 없는 경우에만 표시
+    if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day && emotion == null) {
       todayIconWidget = SvgPicture.asset(
         'assets/icon/write_diary.svg',
         width: squareCellSize * 0.8, 
