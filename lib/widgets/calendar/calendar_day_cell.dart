@@ -80,8 +80,8 @@ class CalendarDayCell extends StatelessWidget {
       }
     }
 
-    // 3. 오늘 날짜 작성 이모티콘 위젯 설정
-    if (day.year == now.year && day.month == now.month && day.day == now.day && emotion == null) {
+    // 3. 오늘 날짜 작성 이모티콘 위젯 설정 (현재 월에서만 표시)
+    if (day.year == now.year && day.month == now.month && day.day == now.day && emotion == null && isCurrentMonthDay) {
       todayIconWidget = SvgPicture.asset(
         'assets/icon/write_diary.svg',
         width: squareCellSize * 0.8,
