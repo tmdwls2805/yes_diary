@@ -37,21 +37,20 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void initState() {
     super.initState();
-    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-    // 실제 배포 시에는 DateTime.now()를 사용하거나 유연하게 설정해야 합니다.
-    final DateTime simulatedNow = DateTime(2025, 9, 1); 
+    // 실제 현재 날짜와 시간을 사용
+    final DateTime now = DateTime.now(); 
 
-    final DateTime effectiveDate = widget.initialDate ?? simulatedNow; // simulatedNow 사용
+    final DateTime effectiveDate = widget.initialDate ?? now;
 
     _firstMonth = DateTime.utc(effectiveDate.year, effectiveDate.month, 1);
     
     _focusedDay = DateTime(effectiveDate.year, effectiveDate.month, 1);
     
-    // PageController의 initialPage도 simulatedNow를 기준으로 계산
-    int initialPage = simulatedNow.month - _firstMonth.month + (simulatedNow.year - _firstMonth.year) * 12;
+    // PageController의 initialPage도 실제 now를 기준으로 계산
+    int initialPage = now.month - _firstMonth.month + (now.year - _firstMonth.year) * 12;
     _pageController = PageController(initialPage: initialPage);
 
-    _selectedDay = simulatedNow; // simulatedNow 사용
+    _selectedDay = now; // 실제 now 사용
 
     _loadDiariesForMonth(_focusedDay); // 초기 월의 일기 로드
   }
@@ -84,14 +83,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
     final size = renderBox.size;
     
     final List<DateTime> monthsList = [];
-    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-    // 실제 배포 시에는 DateTime.now()를 사용하거나 유연하게 설정해야 합니다.
-    final DateTime simulatedNowInDropdown = DateTime(2025, 9, 1); 
+    // 실제 현재 날짜와 시간을 사용
+    final DateTime nowInDropdown = DateTime.now(); 
 
     DateTime currentMonthInLoop = _firstMonth;
     
-    // 드롭다운 목록의 마지막 월: simulatedNowInDropdown을 기준으로 6개월 뒤
-    final DateTime sixMonthsLater = DateTime(simulatedNowInDropdown.year, simulatedNowInDropdown.month + 6, 1);
+    // 드롭다운 목록의 마지막 월: 실제 nowInDropdown을 기준으로 6개월 뒤
+    final DateTime sixMonthsLater = DateTime(nowInDropdown.year, nowInDropdown.month + 6, 1);
     
     while (currentMonthInLoop.isBefore(sixMonthsLater) ||
            (currentMonthInLoop.year == sixMonthsLater.year && currentMonthInLoop.month == sixMonthsLater.month)) {
@@ -248,14 +246,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
       onPopInvoked: (didPop) {
         if (didPop) return;
         
-        // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-        final DateTime simulatedNow = DateTime(2025, 9, 1); 
+        // 실제 현재 날짜와 시간을 사용
+        final DateTime now = DateTime.now(); 
 
-        final DateTime currentMonth = DateTime(simulatedNow.year, simulatedNow.month, 1); // simulatedNow 사용
+        final DateTime currentMonth = DateTime(now.year, now.month, 1); // 실제 now 사용
         final DateTime focusedMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
 
         if (focusedMonth.year != currentMonth.year || focusedMonth.month != currentMonth.month) {
-          final int targetPageIndex = (simulatedNow.year - _firstMonth.year) * 12 + (simulatedNow.month - _firstMonth.month); // simulatedNow 사용
+          final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month); // 실제 now 사용
           _pageController.jumpToPage(targetPageIndex);
           setState(() {
             _focusedDay = currentMonth;
@@ -357,8 +355,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
               }),
             ),
           ),
-          SizedBox(
-            height: calendarGridHeight,
+          Expanded( // 남은 세로 공간을 모두 차지하도록 변경
             child: PageView.builder(
               controller: _pageController,
               physics: const BouncingScrollPhysics(),
@@ -415,11 +412,11 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       isCurrentMonthDay = true;
                     }
 
-                    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-                    final DateTime simulatedNow = DateTime(2025, 9, 1);
-                    final bool isToday = day.year == simulatedNow.year && // simulatedNow 사용
-                        day.month == simulatedNow.month && // simulatedNow 사용
-                        day.day == simulatedNow.day; // simulatedNow 사용
+                    // 실제 현재 날짜와 시간을 사용
+                    final DateTime now = DateTime.now();
+                    final bool isToday = day.year == now.year && 
+                        day.month == now.month && 
+                        day.day == now.day; 
 
                     final bool isSelected = _selectedDay != null &&
                         day.year == _selectedDay!.year &&
@@ -442,13 +439,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
                       isPreviousMonthDay: isPreviousMonthDay,
                       squareCellSize: squareCellSize,
                       textSizedBoxHeight: textSizedBoxHeight,
-                      onTap: () async { // isCurrentMonthDay 조건 제거
+                      onTap: () async {
                           setState(() {
                             _selectedDay = day;
                           });
 
-                          // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-                          final DateTime today = DateTime(2025, 9, 1); 
+                          // 실제 현재 날짜와 시간을 사용
+                          final DateTime today = DateTime.now(); 
                           final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
                           final DateTime normalizedSelectedDay = DateTime(day.year, day.month, day.day);
 
@@ -456,7 +453,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                           final DateTime firstClickableMonthStart = DateTime(_firstMonth.year, _firstMonth.month, 1);
                           if (normalizedSelectedDay.isBefore(firstClickableMonthStart)) {
                               Fluttertoast.showToast(
-                                msg: "가입일 기준 이전 달의 날짜는 선택할 수 없습니다.",
+                                msg: "가입일 이전의 날짜는 선택할 수 없습니다.",
                                 toastLength: Toast.LENGTH_SHORT,
                                 gravity: ToastGravity.CENTER,
                                 timeInSecForIosWeb: 1,
@@ -536,8 +533,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
               itemCount: 200000,
             ),
           ),
-
-          const Spacer(),
         ],
       ),
     );
@@ -560,15 +555,15 @@ class _CustomCalendarState extends State<CustomCalendar> {
     Widget? emotionSvgWidget; 
     Widget? todayIconWidget; // 오늘 날짜 이모티콘 위젯
 
-    // ! 중요: 테스트 목적으로 DateTime.now()를 2025년 9월 1일로 가정
-    final DateTime simulatedNow = DateTime(2025, 9, 1);
+    // 실제 현재 날짜와 시간을 사용
+    final DateTime now = DateTime.now();
 
     // 1. 배경색 및 글자색 결정
     // isCurrentMonthDay는 해당 셀이 현재 "보고 있는 달"에 속하는지 여부
     if (isCurrentMonthDay) {
-      if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day) {
+      if (day.year == now.year && day.month == now.month && day.day == now.day) {
         backgroundColor = const Color(0xFFFF4646);
-        textColor = const Color(0xFFFF4646);
+        textColor = const Color(0xFFFF3B3B); // 오늘 날짜는 항상 FF3B3B
       } else {
         backgroundColor = const Color(0xFF4C3030);
         textColor = const Color(0xFFC5C5C5);
@@ -601,7 +596,12 @@ class _CustomCalendarState extends State<CustomCalendar> {
         backgroundColor = Colors.transparent; 
         // 현재 달의 날짜인 경우에만 글자색을 흰색으로 변경
         if (isCurrentMonthDay) {
-          textColor = const Color(0xFFC5C5C5); 
+          // 오늘 날짜인 경우 FF3B3B 유지
+          if (day.year == now.year && day.month == now.month && day.day == now.day) {
+            textColor = const Color(0xFFFF3B3B);
+          } else {
+            textColor = const Color(0xFFC5C5C5); 
+          }
         }
         // 이전 달 또는 다음 달의 날짜인 경우 textColor는 초기 설정값(0xFF363636)을 유지
       }
@@ -609,7 +609,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
     // 3. 오늘 날짜 작성 이모티콘 위젯 설정
     // 오늘 날짜이면서 감정 이모티콘이 없는 경우에만 표시
-    if (day.year == simulatedNow.year && day.month == simulatedNow.month && day.day == simulatedNow.day && emotion == null) {
+    if (day.year == now.year && day.month == now.month && day.day == now.day && emotion == null) {
       todayIconWidget = SvgPicture.asset(
         'assets/icon/write_diary.svg',
         width: squareCellSize * 0.8, 
