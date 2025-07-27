@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yes_diary/providers/user_provider.dart';
-import 'package:yes_diary/providers/diary_provider.dart';
-import 'package:yes_diary/providers/calendar_provider.dart';
-import 'package:yes_diary/widgets/calendar/calendar_header.dart';
-import 'package:yes_diary/widgets/calendar/month_dropdown_overlay.dart';
-import 'package:yes_diary/widgets/calendar/weekdays_header.dart';
-import 'package:yes_diary/widgets/calendar/calendar_grid.dart';
+import '../widgets/calendar/calendar_header.dart';
+import '../widgets/calendar/month_dropdown_overlay.dart';
+import '../widgets/calendar/weekdays_header.dart';
+import '../widgets/calendar/calendar_grid.dart';
+import '../core/di/injection_container.dart';
 
 class CustomCalendar extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -33,9 +31,9 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
     
     // Set initial calendar state
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final calendarNotifier = ref.read(calendarProvider.notifier);
-      calendarNotifier.setFocusedDay(DateTime(effectiveDate.year, effectiveDate.month, 1));
-      calendarNotifier.setSelectedDay(now);
+      final calendarViewModel = ref.read(calendarViewModelProvider.notifier);
+      calendarViewModel.setFocusedDay(DateTime(effectiveDate.year, effectiveDate.month, 1));
+      calendarViewModel.setSelectedDay(now);
       
       // Load initial diaries
       _loadDiariesForMonth(DateTime(effectiveDate.year, effectiveDate.month, 1));
@@ -53,7 +51,7 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
   }
 
   void _toggleDropdown() {
-    final calendarState = ref.read(calendarProvider);
+    final calendarState = ref.read(calendarViewModelProvider);
     if (calendarState.isDropdownActive) {
       _removeOverlay();
     } else {
@@ -72,18 +70,18 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
       onLoadDiariesForMonth: _loadDiariesForMonth,
     );
     Overlay.of(context).insert(_overlayEntry!);
-    ref.read(calendarProvider.notifier).openDropdown();
+    ref.read(calendarViewModelProvider.notifier).openDropdown();
   }
 
   void _removeOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-    ref.read(calendarProvider.notifier).closeDropdown();
+    ref.read(calendarViewModelProvider.notifier).closeDropdown();
   }
 
   Future<void> _loadDiariesForMonth(DateTime month) async {
-    final userData = ref.read(userProvider);
-    if (userData.userId == null) {
+    final userState = ref.read(userViewModelProvider);
+    if (userState.user?.userId == null) {
       print('CustomCalendar: User ID is null, cannot load diaries.');
       return;
     }
@@ -91,12 +89,16 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
     final DateTime startOfRange = DateTime(month.year, month.month - 1, 1);
     final DateTime endOfRange = DateTime(month.year, month.month + 2, 0, 23, 59, 59);
 
-    await ref.read(diaryProvider.notifier).loadDiariesForRange(startOfRange, endOfRange, userData.userId!);
+    await ref.read(diaryViewModelProvider.notifier).loadDiariesForRange(
+      startOfRange, 
+      endOfRange, 
+      userState.user!.userId,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final calendarState = ref.watch(calendarProvider);
+    final calendarState = ref.watch(calendarViewModelProvider);
     
     final double screenWidth = MediaQuery.of(context).size.width;
     final double crossAxisSpacing = 4.0;
@@ -119,7 +121,7 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
         if (focusedMonth.year != currentMonth.year || focusedMonth.month != currentMonth.month) {
           final int targetPageIndex = (now.year - _firstMonth.year) * 12 + (now.month - _firstMonth.month);
           _pageController.jumpToPage(targetPageIndex);
-          ref.read(calendarProvider.notifier).setFocusedDay(currentMonth);
+          ref.read(calendarViewModelProvider.notifier).setFocusedDay(currentMonth);
         } else {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
@@ -142,7 +144,7 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
               onPageChanged: (index) {
                 final newFocusedDay = DateTime(
                     _firstMonth.year, _firstMonth.month + index, _firstMonth.day);
-                ref.read(calendarProvider.notifier).setFocusedDay(newFocusedDay);
+                ref.read(calendarViewModelProvider.notifier).setFocusedDay(newFocusedDay);
                 _loadDiariesForMonth(newFocusedDay);
               },
               itemBuilder: (context, pageIndex) {

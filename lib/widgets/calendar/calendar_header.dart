@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:yes_diary/providers/calendar_provider.dart';
+import '../../core/di/injection_container.dart';
 
 class CalendarHeader extends ConsumerWidget {
   final LayerLink layerLink;
@@ -16,7 +16,7 @@ class CalendarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendarState = ref.watch(calendarProvider);
+    final calendarState = ref.watch(calendarViewModelProvider);
 
     return Padding(
       padding: const EdgeInsets.only(

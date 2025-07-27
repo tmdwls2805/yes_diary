@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yes_diary/providers/calendar_provider.dart';
+import '../../core/di/injection_container.dart';
 
 class MonthDropdownOverlay {
   static OverlayEntry createOverlay({
@@ -24,7 +24,7 @@ class MonthDropdownOverlay {
       currentMonthInLoop = DateTime(currentMonthInLoop.year, currentMonthInLoop.month + 1);
     }
 
-    final currentFocusedDay = ref.read(calendarProvider).focusedDay;
+    final currentFocusedDay = ref.read(calendarViewModelProvider).focusedDay;
     int focusedIndex = monthsList.indexWhere((month) => 
         month.year == currentFocusedDay.year && month.month == currentFocusedDay.month);
     
@@ -75,7 +75,7 @@ class MonthDropdownOverlay {
                           children: [
                             InkWell(
                               onTap: () {
-                                ref.read(calendarProvider.notifier).setFocusedDay(month);
+                                ref.read(calendarViewModelProvider.notifier).setFocusedDay(month);
                                 final int targetPageIndex = 
                                     (month.year - firstMonth.year) * 12 + 
                                     (month.month - firstMonth.month);

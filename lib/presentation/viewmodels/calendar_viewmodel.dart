@@ -24,8 +24,8 @@ class CalendarState {
   }
 }
 
-class CalendarNotifier extends StateNotifier<CalendarState> {
-  CalendarNotifier() : super(CalendarState(
+class CalendarViewModel extends StateNotifier<CalendarState> {
+  CalendarViewModel() : super(CalendarState(
     focusedDay: DateTime.now(),
     selectedDay: DateTime.now(),
   ));
@@ -50,7 +50,3 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     state = state.copyWith(isDropdownActive: true);
   }
 }
-
-final calendarProvider = StateNotifierProvider<CalendarNotifier, CalendarState>((ref) {
-  return CalendarNotifier();
-});

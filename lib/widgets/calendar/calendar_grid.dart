@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:yes_diary/widgets/calendar/calendar_day_cell.dart';
-import 'package:yes_diary/providers/calendar_provider.dart';
-import 'package:yes_diary/providers/diary_provider.dart';
-import 'package:yes_diary/providers/user_provider.dart';
-import 'package:yes_diary/screens/diary_write_screen.dart';
-import 'package:yes_diary/screens/diary_view_screen.dart';
+import 'calendar_day_cell.dart';
+import '../../core/di/injection_container.dart';
+import '../../presentation/views/diary_write_view.dart';
+import '../../presentation/views/diary_view_view.dart';
+import '../../presentation/viewmodels/user_viewmodel.dart';
+import '../../presentation/viewmodels/calendar_viewmodel.dart';
 
 class CalendarGrid extends ConsumerWidget {
   final DateTime currentMonth;
@@ -34,8 +34,8 @@ class CalendarGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final calendarState = ref.watch(calendarProvider);
-    final userData = ref.watch(userProvider);
+    final calendarState = ref.watch(calendarViewModelProvider);
+    final userState = ref.watch(userViewModelProvider);
 
     final firstDayOfMonth = DateTime(currentMonth.year, currentMonth.month, 1);
     final daysInMonth = DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
@@ -98,7 +98,7 @@ class CalendarGrid extends ConsumerWidget {
           isPreviousMonthDay: isPreviousMonthDay,
           squareCellSize: squareCellSize,
           textSizedBoxHeight: textSizedBoxHeight,
-          onTap: () => _handleDayTap(context, ref, day, userData, calendarState),
+          onTap: () => _handleDayTap(context, ref, day, userState, calendarState),
           emotion: emotion,
         );
       },
@@ -110,10 +110,10 @@ class CalendarGrid extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     DateTime day,
-    UserData userData,
+    UserState userState,
     CalendarState calendarState,
   ) async {
-    ref.read(calendarProvider.notifier).setSelectedDay(day);
+    ref.read(calendarViewModelProvider.notifier).setSelectedDay(day);
 
     final DateTime today = DateTime.now();
     final DateTime normalizedToday = DateTime(today.year, today.month, today.day);
@@ -148,14 +148,15 @@ class CalendarGrid extends ConsumerWidget {
       return;
     }
 
-    if (userData.userId != null) {
-      final hasDiary = await ref.read(diaryProvider.notifier).hasDiaryOnDate(day, userData.userId!);
+    if (userState.user?.userId != null) {
+      final diaryViewModel = ref.read(diaryViewModelProvider.notifier);
+      final existingDiary = diaryViewModel.getDiaryForDate(day);
       
-      if (hasDiary) {
+      if (existingDiary != null) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: initialDate),
+            builder: (context) => DiaryViewView(selectedDate: day, createdAt: initialDate),
           ),
         ).then((_) => onLoadDiariesForMonth(calendarState.focusedDay));
       } else {
@@ -164,7 +165,7 @@ class CalendarGrid extends ConsumerWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DiaryWriteScreen(selectedDate: day),
+              builder: (context) => DiaryWriteView(selectedDate: day),
             ),
           ).then((_) => onLoadDiariesForMonth(calendarState.focusedDay));
         } else {
@@ -172,7 +173,7 @@ class CalendarGrid extends ConsumerWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DiaryViewScreen(selectedDate: day, createdAt: initialDate),
+              builder: (context) => DiaryViewView(selectedDate: day, createdAt: initialDate),
             ),
           ).then((_) => onLoadDiariesForMonth(calendarState.focusedDay));
         }
@@ -182,7 +183,7 @@ class CalendarGrid extends ConsumerWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => DiaryWriteScreen(selectedDate: day),
+          builder: (context) => DiaryWriteView(selectedDate: day),
         ),
       ).then((_) => onLoadDiariesForMonth(calendarState.focusedDay));
     }
