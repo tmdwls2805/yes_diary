@@ -2,10 +2,12 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import '../database/diary_database.dart';
+import '../repository/diary_repository.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
   static DiaryDatabase? _diaryDatabase;
+  static DiaryRepository? _diaryRepository;
 
   DatabaseService._internal();
 
@@ -26,6 +28,7 @@ class DatabaseService {
       
       _diaryDatabase = DiaryDatabase();
       await _diaryDatabase!.initDatabase();
+      _diaryRepository = DiaryRepository(_diaryDatabase!);
       print('데이터베이스 초기화 완료');
     } catch (e) {
       print('데이터베이스 초기화 실패: $e');
@@ -33,12 +36,12 @@ class DatabaseService {
     }
   }
 
-  /// 일기 데이터베이스를 반환합니다.
-  DiaryDatabase get diaryDatabase {
-    if (_diaryDatabase == null) {
+  /// 일기 저장소를 반환합니다.
+  DiaryRepository get diaryRepository {
+    if (_diaryRepository == null) {
       throw Exception('데이터베이스가 초기화되지 않았습니다. initialize()를 먼저 호출하세요.');
     }
-    return _diaryDatabase!;
+    return _diaryRepository!;
   }
 
   /// 데이터베이스를 닫습니다.
@@ -47,6 +50,7 @@ class DatabaseService {
       if (_diaryDatabase != null) {
         await _diaryDatabase!.closeDatabase();
         _diaryDatabase = null;
+        _diaryRepository = null;
         print('데이터베이스 연결 종료');
       }
     } catch (e) {
@@ -55,5 +59,5 @@ class DatabaseService {
   }
 
   /// 데이터베이스가 초기화되었는지 확인합니다.
-  bool get isInitialized => _diaryDatabase != null;
+  bool get isInitialized => _diaryDatabase != null && _diaryRepository != null;
 } 

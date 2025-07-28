@@ -1,15 +1,14 @@
 <svg width="348" height="571" viewBox="0 0 348 571" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle cx="173" cy="492" r="68" fill="#9BE6C8"/>
-<rect x="105" y="533" width="58" height="38" rx="19" fill="#9BE6C8"/>
-<rect x="191" y="533" width="58" height="38" rx="19" fill="#FF5D5D"/>
-<rect x="191" y="533" width="58" height="38" rx="19" fill="#9BE6C8"/>
-<circle cx="172" cy="340" r="124" fill="url(#paint0_linear_2242_2605)"/>
-<path d="M109 353L123.152 348.531C126.307 347.535 129.693 347.535 132.848 348.531L147 353" stroke="black" stroke-width="6" stroke-linecap="round"/>
-<path d="M201 353L215.152 348.531C218.307 347.535 221.693 347.535 224.848 348.531L239 353" stroke="black" stroke-width="6" stroke-linecap="round"/>
-<path d="M165.682 393.455L185.682 387.455" stroke="black" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="175" cy="492" rx="68" ry="68" fill="#888888"/>
+<ellipse cx="174" cy="340" rx="124" ry="124" fill="url(#paint0_linear_2217_827)"/>
+<rect x="129.794" y="340" width="18.9076" height="18.9076" rx="2.24778" fill="black"/>
+<rect x="197.479" y="340" width="18.9076" height="18.9076" rx="2.24778" fill="black"/>
+<rect x="107" y="533" width="58" height="38" rx="5.02445" fill="#888888"/>
+<rect x="193" y="533" width="58" height="38" rx="5.02445" fill="#FF5D5D"/>
+<rect x="193" y="533" width="58" height="38" rx="5.02445" fill="#888888"/>
 <defs>
-<linearGradient id="paint0_linear_2242_2605" x1="62.1028" y1="580.5" x2="261" y2="236" gradientUnits="userSpaceOnUse">
-<stop stop-color="#50D49F"/>
+<linearGradient id="paint0_linear_2217_827" x1="125.013" y1="475" x2="263" y2="236" gradientUnits="userSpaceOnUse">
+<stop stop-color="#6D6D6D"/>
 <stop offset="1" stop-color="white"/>
 </linearGradient>
 </defs>
