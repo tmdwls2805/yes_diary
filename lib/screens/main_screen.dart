@@ -1,39 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yes_diary/widgets/custom_calendar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../widgets/custom_calendar.dart';
-import '../../core/di/injection_container.dart';
-import '../viewmodels/user_viewmodel.dart';
+import 'package:yes_diary/providers/user_provider.dart';
 
-class MainView extends ConsumerStatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   @override
-  ConsumerState<MainView> createState() => _MainViewState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainViewState extends ConsumerState<MainView> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userState = ref.watch(userViewModelProvider);
+    final userData = ref.watch(userProvider);
     final double bottomSystemPadding = MediaQuery.of(context).padding.bottom;
-    final double desiredNavBarHeight = 80.0;
+    final double desiredNavBarHeight = 80.0; 
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A),
-      body: _buildBody(userState),
+      backgroundColor: const Color(0xFF1A1A1A), 
+      body: _buildBody(),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF1A1A1A),
+          color: Color(0xFF1A1A1A), 
           border: Border(
             top: BorderSide(
-              color: Color(0xFF3F3F3F),
-              width: 1.0,
+              color: Color(0xFF3F3F3F), 
+              width: 1.0, 
             ),
           ),
         ),
-        height: desiredNavBarHeight + bottomSystemPadding,
-        padding: EdgeInsets.only(bottom: bottomSystemPadding),
+        height: desiredNavBarHeight + bottomSystemPadding, 
+        padding: EdgeInsets.only(bottom: bottomSystemPadding), 
         child: BottomNavigationBar(
           items: <BottomNavigationBarItem>[
             BottomNavigationBarItem(
@@ -64,17 +68,19 @@ class _MainViewState extends ConsumerState<MainView> {
     );
   }
 
-  Widget _buildBody(UserState userState) {
+  Widget _buildBody() {
+    final userData = ref.watch(userProvider);
+    
     switch (_selectedIndex) {
       case 0:
         return Column(
           children: [
             Expanded(
-              child: userState.user?.userId == null
+              child: userData.userId == null
                   ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : CustomCalendar(
-                      initialDate: userState.user?.createdAt,
-                    ),
+                      initialDate: userData.createdAt,
+                    ), 
             ),
           ],
         );

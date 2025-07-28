@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../data/models/diary_model.dart';
+import '../models/diary_entry.dart';
 
 class DiaryDatabase {
   static const String _databaseName = 'diary.db';
@@ -67,7 +67,7 @@ class DiaryDatabase {
   }
 
   /// 일기를 데이터베이스에 삽입합니다. 같은 날짜가 존재하면 업데이트합니다.
-  Future<void> insertDiary(DiaryModel entry) async {
+  Future<void> insertDiary(DiaryEntry entry) async {
     final db = await database;
     await db.insert(
       _tableName,
@@ -77,7 +77,7 @@ class DiaryDatabase {
   }
 
   /// 모든 일기를 조회합니다.
-  Future<List<DiaryModel>> getAllDiaries() async {
+  Future<List<DiaryEntry>> getAllDiaries() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
@@ -85,12 +85,12 @@ class DiaryDatabase {
     );
 
     return List.generate(maps.length, (i) {
-      return DiaryModel.fromMap(maps[i]);
+      return DiaryEntry.fromMap(maps[i]);
     });
   }
 
   /// 특정 사용자 ID의 모든 일기를 조회합니다.
-  Future<List<DiaryModel>> getAllDiariesByUserId(String userId) async {
+  Future<List<DiaryEntry>> getAllDiariesByUserId(String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
@@ -100,12 +100,12 @@ class DiaryDatabase {
     );
 
     return List.generate(maps.length, (i) {
-      return DiaryModel.fromMap(maps[i]);
+      return DiaryEntry.fromMap(maps[i]);
     });
   }
 
   /// 특정 날짜의 일기를 조회합니다.
-  Future<DiaryModel?> getDiaryByDate(DateTime date) async {
+  Future<DiaryEntry?> getDiaryByDate(DateTime date) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
@@ -115,13 +115,13 @@ class DiaryDatabase {
     );
 
     if (maps.isNotEmpty) {
-      return DiaryModel.fromMap(maps.first);
+      return DiaryEntry.fromMap(maps.first);
     }
     return null;
   }
 
   /// 특정 날짜와 사용자 ID의 일기를 조회합니다.
-  Future<DiaryModel?> getDiaryByDateAndUserId(DateTime date, String userId) async {
+  Future<DiaryEntry?> getDiaryByDateAndUserId(DateTime date, String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
@@ -131,13 +131,13 @@ class DiaryDatabase {
     );
 
     if (maps.isNotEmpty) {
-      return DiaryModel.fromMap(maps.first);
+      return DiaryEntry.fromMap(maps.first);
     }
     return null;
   }
 
   /// 일기를 업데이트합니다.
-  Future<void> updateDiary(DiaryModel entry) async {
+  Future<void> updateDiary(DiaryEntry entry) async {
     final db = await database;
     await db.update(
       _tableName,
@@ -168,7 +168,7 @@ class DiaryDatabase {
   }
 
   /// 날짜 범위로 일기를 조회합니다.
-  Future<List<DiaryModel>> getDiariesByDateRange(
+  Future<List<DiaryEntry>> getDiariesByDateRange(
     DateTime startDate,
     DateTime endDate,
   ) async {
@@ -184,12 +184,12 @@ class DiaryDatabase {
     );
 
     return List.generate(maps.length, (i) {
-      return DiaryModel.fromMap(maps[i]);
+      return DiaryEntry.fromMap(maps[i]);
     });
   }
 
   /// 특정 사용자 ID와 날짜 범위로 일기를 조회합니다.
-  Future<List<DiaryModel>> getDiariesByDateRangeAndUserId(
+  Future<List<DiaryEntry>> getDiariesByDateRangeAndUserId(
     DateTime startDate,
     DateTime endDate,
     String userId,
@@ -207,21 +207,8 @@ class DiaryDatabase {
     );
 
     return List.generate(maps.length, (i) {
-      return DiaryModel.fromMap(maps[i]);
+      return DiaryEntry.fromMap(maps[i]);
     });
-  }
-
-  /// 특정 날짜와 사용자 ID에 일기가 존재하는지 확인합니다.
-  Future<bool> hasDiaryOnDateAndUserId(DateTime date, String userId) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      _tableName,
-      where: 'date = ? AND userId = ?',
-      whereArgs: [DateTime(date.year, date.month, date.day).toIso8601String(), userId],
-      limit: 1,
-    );
-
-    return maps.isNotEmpty;
   }
 
   /// 데이터베이스 연결을 닫습니다.
