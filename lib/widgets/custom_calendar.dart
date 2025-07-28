@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import '../widgets/calendar/calendar_header.dart';
 import '../widgets/calendar/month_dropdown_overlay.dart';
 import '../widgets/calendar/weekdays_header.dart';
@@ -22,7 +20,6 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
   late PageController _pageController;
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
-  DateTime? _lastBackPressedTime;
 
   @override
   void initState() {
@@ -126,23 +123,10 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
           _pageController.jumpToPage(targetPageIndex);
           ref.read(calendarViewModelProvider.notifier).setFocusedDay(currentMonth);
         } else {
-          // 현재 월을 보고 있는 경우 - 두 번 눌러서 앱 종료
-          final now = DateTime.now();
-          if (_lastBackPressedTime == null || 
-              now.difference(_lastBackPressedTime!) > const Duration(seconds: 2)) {
-            _lastBackPressedTime = now;
-            Fluttertoast.showToast(
-              msg: "한번 더 누르면 앱이 종료됩니다.",
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.black,
-              textColor: Colors.white,
-              fontSize: 16.0,
-            );
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
           } else {
-            // 2초 이내에 다시 눌렀을 때 앱 종료
-            SystemNavigator.pop();
+            print('No more routes to pop. Consider exiting app or showing a message.');
           }
         }
       },

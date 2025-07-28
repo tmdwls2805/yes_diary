@@ -14,15 +14,6 @@ class _MainViewState extends ConsumerState<MainView> {
   int _selectedIndex = 0;
 
   @override
-  void initState() {
-    super.initState();
-    // 사용자 초기화
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(userViewModelProvider.notifier).initializeUser();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userViewModelProvider);
     final double bottomSystemPadding = MediaQuery.of(context).padding.bottom;
