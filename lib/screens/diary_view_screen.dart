@@ -169,7 +169,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         DiaryBodyWithNavigation(
-                          hardcodedImagePath: 'assets/emotion/green_body.svg',
+                          hardcodedImagePath: 'assets/emotion/gray_body.svg',
                           customText: '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
                           onLeftSwipe: _canNavigateToPrevious() ? () {
                             final previousDay = _currentDate.subtract(const Duration(days: 1));

@@ -56,6 +56,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.3 # Windows/Linux/macOS 지원
   uuid: ^4.4.0
   carousel_slider: ^4.2.1
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -116,3 +117,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  # min_sdk_android: 21 # android min sdk 버전을 설정합니다. 기본값은 21입니다.
+  # adaptive_icon_background: "#ffffff" # Android 8.0 이상 어댑티브 아이콘 배경 색상
+  # adaptive_icon_foreground: "assets/icon/app_icon_foreground.png" # Android 8.0 이상 어댑티브 아이콘 전경 이미지
