@@ -10,6 +10,7 @@ import 'package:yes_diary/core/constants/app_image.dart';
 import 'package:yes_diary/providers/user_provider.dart';
 import 'package:yes_diary/providers/diary_provider.dart';
 import 'package:yes_diary/providers/calendar_provider.dart';
+import 'package:flutter/services.dart'; // Added for SystemNavigator
 
 class CustomCalendar extends ConsumerStatefulWidget {
   final DateTime? initialDate;
@@ -21,6 +22,7 @@ class CustomCalendar extends ConsumerStatefulWidget {
 }
 
 class _CustomCalendarState extends ConsumerState<CustomCalendar> {
+  DateTime? _lastExitTime; // Added for double-tap to exit
   late final DateTime _firstMonth;
   late PageController _pageController;
   OverlayEntry? _overlayEntry;
@@ -229,10 +231,21 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
           _pageController.jumpToPage(targetPageIndex);
           ref.read(calendarProvider.notifier).setFocusedDay(currentMonth);
         } else {
-          if (Navigator.of(context).canPop()) {
-            Navigator.of(context).pop();
+          // User is on the current month, implement double-tap to exit
+          if (_lastExitTime == null || DateTime.now().difference(_lastExitTime!) > const Duration(seconds: 2)) {
+            _lastExitTime = DateTime.now();
+            Fluttertoast.showToast(
+              msg: "한번 더 뒤로가기 시 앱이 종료됩니다.",
+              toastLength: Toast.LENGTH_SHORT,
+              gravity: ToastGravity.BOTTOM,
+              timeInSecForIosWeb: 1,
+              backgroundColor: Colors.black,
+              textColor: Colors.white,
+              fontSize: 16.0,
+            );
           } else {
-            print('No more routes to pop. Consider exiting app or showing a message.');
+            // Exit the app
+            SystemNavigator.pop(); 
           }
         }
       },

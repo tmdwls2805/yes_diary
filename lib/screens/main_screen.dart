@@ -21,48 +21,63 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final userData = ref.watch(userProvider);
     final double bottomSystemPadding = MediaQuery.of(context).padding.bottom;
-    final double desiredNavBarHeight = 80.0; 
+    final double desiredNavBarHeight = 80.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A1A), 
-      body: _buildBody(),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF1A1A1A), 
-          border: Border(
-            top: BorderSide(
-              color: Color(0xFF3F3F3F), 
-              width: 1.0, 
+    return PopScope(
+      canPop: false, // Disable default pop behavior
+      onPopInvoked: (didPop) {
+        if (didPop) return; // If the system is already handling the pop, do nothing
+        if (_selectedIndex == 1) {
+          setState(() {
+            _selectedIndex = 0; // Navigate to the Calendar tab
+          });
+        } else {
+          // Let the CustomCalendar handle its own PopScope for app exit
+          // The CustomCalendar has its own PopScope to handle app exit on double-tap
+          // No explicit pop needed here, as the CustomCalendar's PopScope will be triggered.
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF1A1A1A), 
+        body: _buildBody(),
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A1A1A), 
+            border: Border(
+              top: BorderSide(
+                color: Color(0xFF3F3F3F), 
+                width: 1.0, 
+              ),
             ),
           ),
-        ),
-        height: desiredNavBarHeight + bottomSystemPadding, 
-        padding: EdgeInsets.only(bottom: bottomSystemPadding), 
-        child: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: _selectedIndex == 0
-                  ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 36, height: 36)
-                  : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 36, height: 36),
-              label: '일기',
-            ),
-            BottomNavigationBarItem(
-              icon: _selectedIndex == 1
-                  ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 36, height: 36)
-                  : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 36, height: 36),
-              label: '마이',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.red,
-          unselectedItemColor: const Color(0xFF808080),
-          onTap: _onItemTapped,
-          backgroundColor: Colors.black,
-          type: BottomNavigationBarType.fixed,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(fontSize: 12.0),
-          unselectedLabelStyle: const TextStyle(fontSize: 12.0),
+          height: desiredNavBarHeight + bottomSystemPadding, 
+          padding: EdgeInsets.only(bottom: bottomSystemPadding), 
+          child: BottomNavigationBar(
+            items: <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: _selectedIndex == 0
+                    ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 36, height: 36)
+                    : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 36, height: 36),
+                label: '일기',
+              ),
+              BottomNavigationBarItem(
+                icon: _selectedIndex == 1
+                    ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 36, height: 36)
+                    : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 36, height: 36),
+                label: '마이',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: Colors.red,
+            unselectedItemColor: const Color(0xFF808080),
+            onTap: _onItemTapped,
+            backgroundColor: Colors.black,
+            type: BottomNavigationBarType.fixed,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            selectedLabelStyle: const TextStyle(fontSize: 12.0),
+            unselectedLabelStyle: const TextStyle(fontSize: 12.0),
+          ),
         ),
       ),
     );
