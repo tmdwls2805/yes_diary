@@ -90,12 +90,74 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       case 0:
         return Column(
           children: [
-            Expanded(
+            Flexible(
               child: userData.userId == null
                   ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : CustomCalendar(
                       initialDate: userData.createdAt,
                     ), 
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+              child: Container(
+                width: double.infinity,
+                height: 50.0,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // TODO: Implement button action
+                    print('New button pressed!');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0x47612323), // 28% transparency
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(34.0),
+                    ),
+                    side: const BorderSide(color: Color(0x14FF0000), width: 1.0), // 8% transparency
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '🔥 ',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '퇴사',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '하고 싶을 때 누르는 버튼',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.0,
+                                  fontWeight: FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SvgPicture.asset(
+                        'assets/emotion/red.svg',
+                        width: 40, // Adjust size as needed
+                        height: 40, // Adjust size as needed
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         );
