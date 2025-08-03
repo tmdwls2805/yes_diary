@@ -5,6 +5,7 @@ class DiaryHeader extends StatelessWidget implements PreferredSizeWidget {
   final DateTime selectedDate;
   final String leftButtonText;
   final String? rightButtonText;
+  final Widget? rightButtonWidget;
   final VoidCallback? onLeftPressed;
   final VoidCallback? onRightPressed;
   final Color? rightButtonColor;
@@ -19,6 +20,7 @@ class DiaryHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onRightPressed,
     this.rightButtonColor,
     this.rightButtonFontWeight,
+    this.rightButtonWidget,
   }) : super(key: key);
 
   @override
@@ -39,11 +41,20 @@ class DiaryHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
           title: Text(
             DateFormat('yyyy.MM.dd').format(selectedDate),
-            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white, 
+              fontSize: 24, 
+              fontWeight: FontWeight.bold
+            ),
           ),
           centerTitle: true,
           actions: [
-            if (rightButtonText != null)
+            if (rightButtonWidget != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: Center(child: rightButtonWidget!),
+              )
+            else if (rightButtonText != null)
               TextButton(
                 onPressed: onRightPressed,
                 child: Text(
