@@ -1,5 +1,41 @@
 # 앗! 네의 일기
 
+## 개발 환경 설정
+
+### 의존성 설치
+```bash
+flutter pub get
+```
+
+### 에뮬레이터 실행 방법
+
+#### iOS 시뮬레이터
+```bash
+# 시뮬레이터 실행
+open -a Simulator
+
+# Flutter 앱 실행
+flutter run
+```
+
+#### Android 에뮬레이터
+```bash
+# 사용 가능한 에뮬레이터 목록 확인
+$HOME/Library/Android/sdk/emulator/emulator -list-avds
+
+# 에뮬레이터 실행 (예: Medium_Phone_API_36.1)
+$HOME/Library/Android/sdk/emulator/emulator -avd Medium_Phone_API_36.1 &
+
+# Flutter 앱 실행
+flutter run
+```
+
+또는 간단하게:
+```bash
+# Flutter가 자동으로 사용 가능한 디바이스를 찾아 실행
+flutter run
+```
+
 # 남은 할 일 
 - 온보딩, 스플래시, 아이콘, 마이 페이지, 로그인
 - 전화번호 로그인
