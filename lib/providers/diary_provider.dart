@@ -103,7 +103,7 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   /// 특정 날짜의 감정 문자열을 반환합니다.
   String? getEmotionForDate(DateTime date) {
     final diary = getDiaryForDate(date);
-    return diary?.emotion;
+    return diary?.emotionName;
   }
 }
 
@@ -117,5 +117,5 @@ final diaryProvider = StateNotifierProvider<DiaryNotifier, Map<DateTime, DiaryEn
 final emotionForDateProvider = Provider.family<String?, DateTime>((ref, date) {
   final diaries = ref.watch(diaryProvider);
   final normalizedDate = DateTime(date.year, date.month, date.day);
-  return diaries[normalizedDate]?.emotion;
+  return diaries[normalizedDate]?.emotionName;
 });

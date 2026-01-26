@@ -40,7 +40,7 @@ void main() {
       final entry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '오늘은 좋은 하루였다.',
-        emotion: 'green',
+        emotionId: 5, // green
       );
 
       // When
@@ -50,7 +50,7 @@ void main() {
       final entries = await database.getAllDiaries();
       expect(entries.length, equals(1));
       expect(entries.first.content, equals(entry.content));
-      expect(entries.first.emotion, equals(entry.emotion));
+      expect(entries.first.emotionId, equals(entry.emotionId));
     });
 
     test('모든 일기 조회 테스트', () async {
@@ -59,12 +59,12 @@ void main() {
         DiaryEntry(
           date: DateTime(2024, 1, 1),
           content: '첫 번째 일기',
-          emotion: 'green',
+          emotionId: 5, // green
         ),
         DiaryEntry(
           date: DateTime(2024, 1, 2),
           content: '두 번째 일기',
-          emotion: 'blue',
+          emotionId: 3, // blue
         ),
       ];
 
@@ -84,7 +84,7 @@ void main() {
       final entry = DiaryEntry(
         date: date,
         content: '특정 날짜 일기',
-        emotion: 'red',
+        emotionId: 1, // red
       );
 
       // When
@@ -94,7 +94,7 @@ void main() {
       // Then
       expect(result, isNotNull);
       expect(result!.content, equals(entry.content));
-      expect(result.emotion, equals(entry.emotion));
+      expect(result.emotionId, equals(entry.emotionId));
     });
 
     test('존재하지 않는 날짜 조회 시 null 반환 테스트', () async {
@@ -113,14 +113,14 @@ void main() {
       final originalEntry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '원래 내용',
-        emotion: 'green',
+        emotionId: 5, // green
       );
       await database.insertDiary(originalEntry);
 
       final updatedEntry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '업데이트된 내용',
-        emotion: 'blue',
+        emotionId: 3, // blue
       );
 
       // When
@@ -130,7 +130,7 @@ void main() {
       final result = await database.getDiaryByDate(DateTime(2024, 1, 1));
       expect(result, isNotNull);
       expect(result!.content, equals('업데이트된 내용'));
-      expect(result.emotion, equals('blue'));
+      expect(result.emotionId, equals(3)); // blue
     });
 
     test('일기 삭제 테스트', () async {
@@ -138,7 +138,7 @@ void main() {
       final entry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '삭제될 일기',
-        emotion: 'red',
+        emotionId: 1, // red
       );
       await database.insertDiary(entry);
 
@@ -155,12 +155,12 @@ void main() {
       final firstEntry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '첫 번째 일기',
-        emotion: 'green',
+        emotionId: 5, // green
       );
       final secondEntry = DiaryEntry(
         date: DateTime(2024, 1, 1),
         content: '두 번째 일기',
-        emotion: 'blue',
+        emotionId: 3, // blue
       );
 
       // When
@@ -171,7 +171,7 @@ void main() {
       final entries = await database.getAllDiaries();
       expect(entries.length, equals(1));
       expect(entries.first.content, equals('두 번째 일기'));
-      expect(entries.first.emotion, equals('blue'));
+      expect(entries.first.emotionId, equals(3)); // blue
     });
 
     test('날짜 범위로 일기 조회 테스트', () async {
@@ -180,17 +180,17 @@ void main() {
         DiaryEntry(
           date: DateTime(2024, 1, 1),
           content: '1월 1일 일기',  
-          emotion: 'green',
+          emotionId: 5, // green
         ),
         DiaryEntry(
           date: DateTime(2024, 1, 5),
           content: '1월 5일 일기',
-          emotion: 'blue',
+          emotionId: 3, // blue
         ),
         DiaryEntry(
           date: DateTime(2024, 1, 10),
           content: '1월 10일 일기',
-          emotion: 'red',
+          emotionId: 1, // red
         ),
       ];
 

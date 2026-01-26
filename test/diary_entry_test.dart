@@ -7,30 +7,31 @@ void main() {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'green';
+      const emotionId = 5; // green
 
       // When
       final entry = DiaryEntry(
         date: date,
         content: content,
-        emotion: emotion,
+        emotionId: emotionId,
       );
 
       // Then
       expect(entry.date, equals(date));
       expect(entry.content, equals(content));
-      expect(entry.emotion, equals(emotion));
+      expect(entry.emotionId, equals(emotionId));
+      expect(entry.emotionName, equals('green'));
     });
 
     test('DiaryEntry를 Map으로 변환하는 테스트', () {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'green';
+      const emotionId = 5; // green
       final entry = DiaryEntry(
         date: date,
         content: content,
-        emotion: emotion,
+        emotionId: emotionId,
       );
 
       // When
@@ -39,18 +40,18 @@ void main() {
       // Then
       expect(map['date'], equals(date.toIso8601String()));
       expect(map['content'], equals(content));
-      expect(map['emotion'], equals(emotion));
+      expect(map['emotion_id'], equals(emotionId));
     });
 
     test('Map에서 DiaryEntry 객체로 변환하는 테스트', () {
       // Given
       final date = DateTime(2024, 1, 1);
       const content = '오늘은 좋은 하루였다.';
-      const emotion = 'green';
+      const emotionId = 5; // green
       final map = {
         'date': date.toIso8601String(),
         'content': content,
-        'emotion': emotion,
+        'emotion_id': emotionId,
       };
 
       // When
@@ -59,22 +60,23 @@ void main() {
       // Then
       expect(entry.date, equals(date));
       expect(entry.content, equals(content));
-      expect(entry.emotion, equals(emotion));
+      expect(entry.emotionId, equals(emotionId));
+      expect(entry.emotionName, equals('green'));
     });
 
     test('유효한 감정 이미지 타입 검증', () {
       // Given
-      final validEmotions = ['green', 'blue', 'red', 'yellow', 'pink'];
+      final validEmotionIds = [1, 2, 3, 4, 5]; // red, yellow, blue, pink, green
       final date = DateTime(2024, 1, 1);
       const content = '테스트 내용';
 
       // When & Then
-      for (final emotion in validEmotions) {
+      for (final emotionId in validEmotionIds) {
         expect(
           () => DiaryEntry(
             date: date,
             content: content,
-            emotion: emotion,
+            emotionId: emotionId,
           ),
           returnsNormally,
         );
@@ -86,18 +88,18 @@ void main() {
       final date = DateTime(2024, 1, 1);
       const content1 = '첫 번째 일기';
       const content2 = '두 번째 일기';
-      const emotion = 'green';
+      const emotionId = 5; // green
 
       final entry1 = DiaryEntry(
         date: date,
         content: content1,
-        emotion: emotion,
+        emotionId: emotionId,
       );
 
       final entry2 = DiaryEntry(
         date: date,
         content: content2,
-        emotion: emotion,
+        emotionId: emotionId,
       );
 
       // When & Then

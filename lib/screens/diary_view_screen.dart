@@ -266,7 +266,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             DiaryBodyWithNavigation(
-                              emotion: _diaryEntry!.emotion,
+                              emotion: _diaryEntry!.emotionName,
                               onLeftSwipe: _canNavigateToPrevious() ? () {
                                 final previousDay = _currentDate.subtract(const Duration(days: 1));
                                 _navigateToDate(previousDay);

@@ -2,11 +2,13 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/diary_entry.dart';
+import '../models/emotion.dart';
 
 class DiaryDatabase {
-  static const String _databaseName = 'diary.db';
-  static const int _databaseVersion = 3;
+  static const String _databaseName = 'diary_v4.db';  // 새 DB 파일 사용
+  static const int _databaseVersion = 1;  // 버전 1로 시작
   static const String _tableName = 'diary_entries';
+  static const String _emotionsTableName = 'emotions';
 
   Database? _database;
 
@@ -34,12 +36,37 @@ class DiaryDatabase {
 
   /// 데이터베이스 테이블을 생성합니다.
   Future<void> _createDatabase(Database db, int version) async {
+    // 1. emotions 테이블 생성 (먼저 생성해야 함 - Foreign Key 참조를 위해)
+    await db.execute('''
+      CREATE TABLE $_emotionsTableName (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        imageUrl TEXT
+      );
+    ''');
+
+    // 2. 기본 감정 데이터 삽입 (ID 순서 고정 - 백엔드와 동일하게)
+    // 항상 이 순서대로 생성됩니다
+    final emotions = [
+      {'id': 1, 'name': 'red', 'imageUrl': 'assets/emotion/red.svg'},
+      {'id': 2, 'name': 'yellow', 'imageUrl': 'assets/emotion/yellow.svg'},
+      {'id': 3, 'name': 'blue', 'imageUrl': 'assets/emotion/blue.svg'},
+      {'id': 4, 'name': 'pink', 'imageUrl': 'assets/emotion/pink.svg'},
+      {'id': 5, 'name': 'green', 'imageUrl': 'assets/emotion/green.svg'},
+    ];
+
+    for (var emotion in emotions) {
+      await db.insert(_emotionsTableName, emotion);
+    }
+
+    // 3. diary_entries 테이블 생성 (emotions 테이블 이후에 생성)
     await db.execute('''
       CREATE TABLE $_tableName (
         date TEXT PRIMARY KEY,
         content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
-        emotion TEXT NOT NULL,
-        userId TEXT
+        emotion_id INTEGER NOT NULL,
+        userId TEXT,
+        FOREIGN KEY (emotion_id) REFERENCES $_emotionsTableName(id)
       );
     ''');
   }
@@ -63,6 +90,101 @@ class DiaryDatabase {
       await db.execute('INSERT INTO temp_diary_entries SELECT date, content, emotion, userId FROM $_tableName;');
       await db.execute('DROP TABLE $_tableName;');
       await db.execute('ALTER TABLE temp_diary_entries RENAME TO $_tableName;');
+    }
+    if (oldVersion < 4) {
+      // 버전 3에서 버전 4로 업그레이드: emotions 테이블 추가 및 emotion TEXT를 emotion_id INTEGER로 변경
+
+      // 1. emotions 테이블 생성
+      await db.execute('''
+        CREATE TABLE emotions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          imageUrl TEXT
+        );
+      ''');
+
+      // 2. 기본 감정 데이터 삽입 (순서 고정)
+      final emotions = [
+        {'id': 1, 'name': 'red', 'imageUrl': 'assets/emotion/red.svg'},
+        {'id': 2, 'name': 'yellow', 'imageUrl': 'assets/emotion/yellow.svg'},
+        {'id': 3, 'name': 'blue', 'imageUrl': 'assets/emotion/blue.svg'},
+        {'id': 4, 'name': 'pink', 'imageUrl': 'assets/emotion/pink.svg'},
+        {'id': 5, 'name': 'green', 'imageUrl': 'assets/emotion/green.svg'},
+      ];
+
+      for (var emotion in emotions) {
+        await db.insert('emotions', emotion);
+      }
+
+      // 3. 기존 데이터를 임시 테이블로 백업하며 emotion TEXT를 emotion_id INTEGER로 변환
+      await db.execute('''
+        CREATE TABLE temp_diary_entries (
+          date TEXT,
+          content TEXT,
+          emotion_id INTEGER,
+          userId TEXT
+        );
+      ''');
+
+      // 4. 기존 데이터 조회
+      final existingDiaries = await db.query('diary_entries');
+
+      // 5. emotion 문자열을 emotion_id로 변환하여 삽입
+      for (var diary in existingDiaries) {
+        try {
+          // emotion 값을 안전하게 가져오기
+          final emotionValue = diary['emotion'];
+          String emotionName = 'red'; // 기본값
+
+          if (emotionValue != null && emotionValue is String) {
+            emotionName = emotionValue;
+          }
+
+          // emotion 이름으로 ID 조회
+          final emotionResult = await db.query(
+            'emotions',
+            where: 'name = ?',
+            whereArgs: [emotionName],
+            limit: 1,
+          );
+
+          // emotion_id 결정 (매칭되는 감정이 없으면 기본값 1 사용)
+          final emotionId = emotionResult.isNotEmpty
+              ? emotionResult.first['id'] as int
+              : 1;
+
+          await db.insert('temp_diary_entries', {
+            'date': diary['date'],
+            'content': diary['content'],
+            'emotion_id': emotionId,
+            'userId': diary['userId'],
+          });
+        } catch (e) {
+          // 개별 항목 변환 실패 시 건너뛰기
+          print('Failed to migrate diary entry: $e');
+          continue;
+        }
+      }
+
+      // 6. 기존 테이블 삭제
+      await db.execute('DROP TABLE diary_entries;');
+
+      // 7. 새로운 스키마로 테이블 재생성
+      await db.execute('''
+        CREATE TABLE diary_entries (
+          date TEXT PRIMARY KEY,
+          content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
+          emotion_id INTEGER NOT NULL,
+          userId TEXT,
+          FOREIGN KEY (emotion_id) REFERENCES emotions(id)
+        );
+      ''');
+
+      // 8. 임시 테이블에서 데이터 복원
+      await db.execute('INSERT INTO diary_entries SELECT date, content, emotion_id, userId FROM temp_diary_entries;');
+
+      // 9. 임시 테이블 삭제
+      await db.execute('DROP TABLE temp_diary_entries;');
     }
   }
 
@@ -209,6 +331,51 @@ class DiaryDatabase {
     return List.generate(maps.length, (i) {
       return DiaryEntry.fromMap(maps[i]);
     });
+  }
+
+  /// 모든 감정을 조회합니다.
+  Future<List<Emotion>> getAllEmotions() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _emotionsTableName,
+      orderBy: 'id ASC',
+    );
+
+    return List.generate(maps.length, (i) {
+      return Emotion.fromMap(maps[i]);
+    });
+  }
+
+  /// 특정 ID의 감정을 조회합니다.
+  Future<Emotion?> getEmotionById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _emotionsTableName,
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return Emotion.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  /// 특정 이름의 감정을 조회합니다.
+  Future<Emotion?> getEmotionByName(String name) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _emotionsTableName,
+      where: 'name = ?',
+      whereArgs: [name],
+      limit: 1,
+    );
+
+    if (maps.isNotEmpty) {
+      return Emotion.fromMap(maps.first);
+    }
+    return null;
   }
 
   /// 데이터베이스 연결을 닫습니다.

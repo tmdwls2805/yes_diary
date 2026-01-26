@@ -43,7 +43,7 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
   void _loadExistingData() {
     if (widget.existingEntry != null) {
       _contentController.text = widget.existingEntry!.content;
-      _selectedEmotion = widget.existingEntry!.emotion;
+      _selectedEmotion = widget.existingEntry!.emotionName;
     }
     _initialContent = _contentController.text;
     _initialEmotion = _selectedEmotion;
@@ -83,7 +83,7 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
     final diaryEntry = DiaryEntry(
       date: widget.selectedDate,
       content: _contentController.text,
-      emotion: _selectedEmotion!,
+      emotionId: DiaryEntry.emotionNameToId(_selectedEmotion!),
       userId: userData.userId!,
     );
 

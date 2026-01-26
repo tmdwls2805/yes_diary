@@ -1,5 +1,6 @@
 import '../database/diary_database.dart';
 import '../models/diary_entry.dart';
+import '../models/emotion.dart';
 
 class DiaryRepository {
   final DiaryDatabase _database;
@@ -87,6 +88,21 @@ class DiaryRepository {
   Future<bool> hasDiaryOnDateAndUserId(DateTime date, String userId) async {
     final diary = await _database.getDiaryByDateAndUserId(date, userId);
     return diary != null;
+  }
+
+  /// 모든 감정을 조회합니다.
+  Future<List<Emotion>> getAllEmotions() async {
+    return await _database.getAllEmotions();
+  }
+
+  /// 특정 ID의 감정을 조회합니다.
+  Future<Emotion?> getEmotionById(int id) async {
+    return await _database.getEmotionById(id);
+  }
+
+  /// 특정 이름의 감정을 조회합니다.
+  Future<Emotion?> getEmotionByName(String name) async {
+    return await _database.getEmotionByName(name);
   }
 
   /// 데이터베이스 연결을 닫습니다.
