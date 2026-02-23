@@ -259,6 +259,7 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 36.0),
                   GestureDetector(
                     onTap: () {
                       if (calendarState.isDropdownActive) {
@@ -271,44 +272,20 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Text(
-                          '${calendarState.focusedDay.year}',
+                          '${calendarState.focusedDay.year}.${calendarState.focusedDay.month.toString().padLeft(2, '0')}',
                           style: const TextStyle(
                             fontSize: 36.0,
                             color: Colors.white,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 8.0),
+                        const SizedBox(width: 12.0),
                         SvgPicture.asset(
                           calendarState.isDropdownActive
                               ? 'assets/icon/calendar_dropdown_active.svg'
                               : 'assets/icon/calendar_dropdown_inactive.svg',
-                          width: 16,
-                          height: 16,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 0.0),
-                  GestureDetector(
-                    onTap: () {
-                      if (calendarState.isDropdownActive) {
-                        _removeOverlay();
-                      } else {
-                        _showDropdown();
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          DateFormat('MMMM', 'en_US')
-                              .format(calendarState.focusedDay)
-                              .toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          width: 20,
+                          height: 20,
                         ),
                       ],
                     ),

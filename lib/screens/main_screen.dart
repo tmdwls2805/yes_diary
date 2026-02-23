@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/widgets/custom_calendar.dart';
+import 'package:yes_diary/widgets/my_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/providers/user_provider.dart';
 import 'dart:async'; // Import Timer
@@ -269,6 +270,12 @@ class _MainScreenState extends ConsumerState<MainScreen> with SingleTickerProvid
   Widget _buildBody() {
     final userData = ref.watch(userProvider);
 
+    // 마이 탭이 선택된 경우
+    if (_selectedIndex == 1) {
+      return const MyScreen();
+    }
+
+    // 일기 탭 (기본)
     return Stack(
       children: [
         Column(
