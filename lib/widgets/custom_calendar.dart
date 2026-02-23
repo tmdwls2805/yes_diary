@@ -279,13 +279,16 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 12.0),
-                        SvgPicture.asset(
-                          calendarState.isDropdownActive
-                              ? 'assets/icon/calendar_dropdown_active.svg'
-                              : 'assets/icon/calendar_dropdown_inactive.svg',
-                          width: 20,
-                          height: 20,
+                        const SizedBox(width: 8.0),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SvgPicture.asset(
+                            calendarState.isDropdownActive
+                                ? 'assets/icon/calendar_dropdown_active.svg'
+                                : 'assets/icon/calendar_dropdown_inactive.svg',
+                            width: 16,
+                            height: 16,
+                          ),
                         ),
                       ],
                     ),
