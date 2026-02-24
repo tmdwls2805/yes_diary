@@ -108,25 +108,33 @@ class DiaryDatabase {
       // 버전 3에서 버전 4로 업그레이드: emotions 테이블 추가 및 emotion TEXT를 emotion_id INTEGER로 변경
 
       // 1. emotions 테이블 생성
-      await db.execute('''
-        CREATE TABLE emotions (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE,
-          imageUrl TEXT
-        );
-      ''');
+      try {
+        await db.execute('''
+          CREATE TABLE emotions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            imageUrl TEXT
+          );
+        ''');
+      } catch (e) {
+        print('emotions table already exists, skipping creation: $e');
+      }
 
       // 2. 기본 감정 데이터 삽입 (순서 고정)
-      final emotions = [
-        {'id': 1, 'name': 'red', 'imageUrl': 'assets/emotion/red.svg'},
-        {'id': 2, 'name': 'yellow', 'imageUrl': 'assets/emotion/yellow.svg'},
-        {'id': 3, 'name': 'blue', 'imageUrl': 'assets/emotion/blue.svg'},
-        {'id': 4, 'name': 'pink', 'imageUrl': 'assets/emotion/pink.svg'},
-        {'id': 5, 'name': 'green', 'imageUrl': 'assets/emotion/green.svg'},
-      ];
+      try {
+        final emotions = [
+          {'id': 1, 'name': 'red', 'imageUrl': 'assets/emotion/red.svg'},
+          {'id': 2, 'name': 'yellow', 'imageUrl': 'assets/emotion/yellow.svg'},
+          {'id': 3, 'name': 'blue', 'imageUrl': 'assets/emotion/blue.svg'},
+          {'id': 4, 'name': 'pink', 'imageUrl': 'assets/emotion/pink.svg'},
+          {'id': 5, 'name': 'green', 'imageUrl': 'assets/emotion/green.svg'},
+        ];
 
-      for (var emotion in emotions) {
-        await db.insert('emotions', emotion);
+        for (var emotion in emotions) {
+          await db.insert('emotions', emotion, conflictAlgorithm: ConflictAlgorithm.ignore);
+        }
+      } catch (e) {
+        print('emotions data already exists, skipping insertion: $e');
       }
 
       // 3. 기존 데이터를 임시 테이블로 백업하며 emotion TEXT를 emotion_id INTEGER로 변환

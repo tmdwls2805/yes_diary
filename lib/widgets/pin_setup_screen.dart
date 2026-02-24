@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'thank_you_screen.dart';
+import '../services/auth_service.dart';
+import '../services/token_service.dart';
+import '../providers/user_provider.dart';
 
-class PinSetupScreen extends StatefulWidget {
+class PinSetupScreen extends ConsumerStatefulWidget {
   final String nickname;
+  final String kakaoAccessToken;
 
   const PinSetupScreen({
     super.key,
     required this.nickname,
+    required this.kakaoAccessToken,
   });
 
   @override
-  State<PinSetupScreen> createState() => _PinSetupScreenState();
+  ConsumerState<PinSetupScreen> createState() => _PinSetupScreenState();
 }
 
-class _PinSetupScreenState extends State<PinSetupScreen> {
+class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
   bool _isLoading = false;
   final List<TextEditingController> _pinControllers = List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _pinFocusNodes = List.generate(4, (_) => FocusNode());
+  final AuthService _authService = AuthService();
 
   @override
   void dispose() {
@@ -48,8 +55,37 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     });
 
     try {
-      // TODO: 서버에 닉네임 + PIN 저장 API 호출
-      await Future.delayed(const Duration(seconds: 1)); // 임시
+      // 서버에 닉네임 + PIN으로 회원가입
+      print('회원가입 시도: nickname=${widget.nickname}, password=$pin');
+      final result = await _authService.signupWithKakao(
+        accessToken: widget.kakaoAccessToken,
+        nickname: widget.nickname,
+        password: pin,
+      );
+
+      // 토큰 저장
+      final tokens = result;
+      final user = tokens['user'];
+
+      await TokenService.saveTokens(
+        accessToken: tokens['accessToken'],
+        refreshToken: tokens['refreshToken'],
+        userInfo: {
+          'id': user['id'],
+          'nickname': user['nickname'],
+          'provider': user['provider'],
+          if (user['createdAt'] != null) 'createdAt': user['createdAt'],
+          if (user['updatedAt'] != null) 'updatedAt': user['updatedAt'],
+        },
+      );
+
+      print('회원가입 완료: ${user['nickname']}');
+
+      // UserProvider 갱신
+      await ref.read(userProvider.notifier).saveUserId(user['id'].toString());
+      if (user['createdAt'] != null) {
+        await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
+      }
 
       if (mounted) {
         // 감사 화면으로 이동
@@ -58,8 +94,9 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
         );
       }
     } catch (e) {
+      print('회원가입 실패: $e');
       if (mounted) {
-        _showErrorDialog('설정에 실패했습니다.\n$e');
+        _showErrorDialog('회원가입에 실패했습니다.\n$e');
       }
     } finally {
       if (mounted) {
@@ -70,12 +107,60 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     }
   }
 
-  void _handleSkip() {
-    // 건너뛰기: PIN 없이 닉네임만 저장
-    // TODO: 서버에 닉네임만 저장 API 호출
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const ThankYouScreen()),
-    );
+  Future<void> _handleSkip() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 건너뛰기: PIN 없이 닉네임만으로 회원가입
+      print('회원가입 시도 (PIN 없이): nickname=${widget.nickname}');
+      final result = await _authService.signupWithKakao(
+        accessToken: widget.kakaoAccessToken,
+        nickname: widget.nickname,
+      );
+
+      // 토큰 저장
+      final tokens = result;
+      final user = tokens['user'];
+
+      await TokenService.saveTokens(
+        accessToken: tokens['accessToken'],
+        refreshToken: tokens['refreshToken'],
+        userInfo: {
+          'id': user['id'],
+          'nickname': user['nickname'],
+          'provider': user['provider'],
+          if (user['createdAt'] != null) 'createdAt': user['createdAt'],
+          if (user['updatedAt'] != null) 'updatedAt': user['updatedAt'],
+        },
+      );
+
+      print('회원가입 완료: ${user['nickname']}');
+
+      // UserProvider 갱신
+      await ref.read(userProvider.notifier).saveUserId(user['id'].toString());
+      if (user['createdAt'] != null) {
+        await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
+      }
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const ThankYouScreen()),
+        );
+      }
+    } catch (e) {
+      print('회원가입 실패: $e');
+      if (mounted) {
+        _showErrorDialog('회원가입에 실패했습니다.\n$e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _showErrorDialog(String message) {

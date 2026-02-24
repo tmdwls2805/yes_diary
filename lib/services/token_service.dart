@@ -31,6 +31,14 @@ class TokenService {
   /// 사용자 정보 저장
   static Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
     await _storage.write(key: _userInfoKey, value: jsonEncode(userInfo));
+
+    // userId와 createdAt을 별도로도 저장 (기존 로직 호환성을 위해)
+    if (userInfo['id'] != null) {
+      await _storage.write(key: 'user_id', value: userInfo['id'].toString());
+    }
+    if (userInfo['createdAt'] != null) {
+      await _storage.write(key: 'created_at', value: userInfo['createdAt'].toString());
+    }
   }
 
   /// 모든 토큰 정보 한번에 저장

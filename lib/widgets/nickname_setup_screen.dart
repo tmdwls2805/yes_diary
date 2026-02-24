@@ -3,7 +3,12 @@ import 'dart:math';
 import 'pin_setup_screen.dart';
 
 class NicknameSetupScreen extends StatefulWidget {
-  const NicknameSetupScreen({super.key});
+  final String kakaoAccessToken;
+
+  const NicknameSetupScreen({
+    super.key,
+    required this.kakaoAccessToken,
+  });
 
   @override
   State<NicknameSetupScreen> createState() => _NicknameSetupScreenState();
@@ -61,7 +66,10 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
     if (mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => PinSetupScreen(nickname: nickname),
+          builder: (context) => PinSetupScreen(
+            nickname: nickname,
+            kakaoAccessToken: widget.kakaoAccessToken,
+          ),
         ),
       );
     }

@@ -114,7 +114,9 @@ class _MyScreenState extends State<MyScreen> {
         if (mounted) {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => const NicknameSetupScreen(),
+              builder: (context) => NicknameSetupScreen(
+                kakaoAccessToken: token.accessToken,
+              ),
             ),
           );
         }

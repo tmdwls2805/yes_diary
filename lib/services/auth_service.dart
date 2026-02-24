@@ -152,4 +152,62 @@ class AuthService {
       }
     }
   }
+
+  /// 카카오 회원가입
+  ///
+  /// [accessToken] 카카오 액세스 토큰
+  /// [nickname] 사용자 닉네임
+  /// [password] 4자리 PIN (optional)
+  ///
+  /// Returns: {"tokens": {"accessToken": "...", "refreshToken": "...", "user": {...}}}
+  Future<Map<String, dynamic>> signupWithKakao({
+    required String accessToken,
+    required String nickname,
+    String? password,
+  }) async {
+    try {
+      // 회원가입도 Interceptor를 건너뛰어야 함 (아직 토큰이 없으므로)
+      final dio = Dio();
+      dio.options.baseUrl = baseUrl;
+      dio.options.connectTimeout = const Duration(seconds: 5);
+      dio.options.receiveTimeout = const Duration(seconds: 3);
+
+      final response = await dio.post(
+        '/auth/kakao/register',
+        data: {
+          'accessToken': accessToken,
+          'nickname': nickname,
+          if (password != null) 'password': password,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // 전체 응답 구조 로깅
+        print('회원가입 성공 응답: ${response.data}');
+
+        final data = response.data['data'];
+
+        if (data == null) {
+          throw Exception('회원가입 응답 데이터가 없습니다: ${response.data}');
+        }
+
+        // 회원가입 응답: data 안에 바로 accessToken, refreshToken, user가 있음
+        // (로그인과 달리 tokens 객체로 감싸져 있지 않음)
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception('회원가입 실패: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception('서버 오류: ${e.response?.statusCode} - ${e.response?.data}');
+      } else {
+        throw Exception('네트워크 오류: ${e.message}');
+      }
+    }
+  }
 }
