@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/services/database_service.dart';
+import 'package:yes_diary/services/auth_service.dart';
 
 class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   DiaryNotifier() : super({});
+
+  final AuthService _authService = AuthService();
 
   /// 지정된 날짜 범위의 일기를 불러와 상태를 갱신합니다.
   /// 삭제된 항목을 반영하기 위해 해당 범위의 기존 상태를 지우고 새로 채웁니다.
@@ -104,6 +107,51 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   String? getEmotionForDate(DateTime date) {
     final diary = getDiaryForDate(date);
     return diary?.emotionName;
+  }
+
+  /// 서버에서 월별 일기를 가져와서 로컬 DB에 저장하고 상태 업데이트
+  Future<void> fetchAndSaveMonthlyDiaries(int year, int month, String userId) async {
+    try {
+      print('서버에서 $year년 $month월 일기 가져오는 중...');
+
+      // 서버에서 월별 일기 조회
+      final serverDiaries = await _authService.getMonthlyDiaries(year, month);
+
+      if (serverDiaries.isEmpty) {
+        print('서버에 $year년 $month월 일기가 없습니다');
+        return;
+      }
+
+      print('서버에서 ${serverDiaries.length}개의 일기를 가져왔습니다');
+
+      // 서버 데이터를 DiaryEntry로 변환하고 로컬 DB에 저장
+      for (var diaryJson in serverDiaries) {
+        try {
+          final diaryEntry = DiaryEntry.fromServerJson(diaryJson);
+
+          // 로컬 DB에 저장 (userId 포함)
+          final entryWithUserId = diaryEntry.copyWith(userId: userId);
+          await DatabaseService.instance.diaryRepository.insertDiary(entryWithUserId);
+
+          // 상태 업데이트
+          final normalizedDate = DateTime(
+            entryWithUserId.date.year,
+            entryWithUserId.date.month,
+            entryWithUserId.date.day,
+          );
+          state = {...state, normalizedDate: entryWithUserId};
+
+          print('일기 저장 완료: ${entryWithUserId.date} (serverId: ${entryWithUserId.serverId})');
+        } catch (e) {
+          print('일기 변환/저장 실패: $e');
+          continue;
+        }
+      }
+
+      print('$year년 $month월 일기 동기화 완료');
+    } catch (e) {
+      print('월별 일기 가져오기 실패: $e');
+    }
   }
 }
 

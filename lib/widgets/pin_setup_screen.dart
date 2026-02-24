@@ -4,6 +4,7 @@ import 'thank_you_screen.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
+import '../providers/diary_provider.dart';
 
 class PinSetupScreen extends ConsumerStatefulWidget {
   final String nickname;
@@ -82,10 +83,19 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
       print('회원가입 완료: ${user['nickname']}');
 
       // UserProvider 갱신
-      await ref.read(userProvider.notifier).saveUserId(user['id'].toString());
+      final userId = user['id'].toString();
+      await ref.read(userProvider.notifier).saveUserId(userId);
       if (user['createdAt'] != null) {
         await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
       }
+
+      // 서버에서 현재 월의 일기 가져오기
+      final now = DateTime.now();
+      await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
+        now.year,
+        now.month,
+        userId,
+      );
 
       if (mounted) {
         // 감사 화면으로 이동
@@ -139,10 +149,19 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
       print('회원가입 완료: ${user['nickname']}');
 
       // UserProvider 갱신
-      await ref.read(userProvider.notifier).saveUserId(user['id'].toString());
+      final userId = user['id'].toString();
+      await ref.read(userProvider.notifier).saveUserId(userId);
       if (user['createdAt'] != null) {
         await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
       }
+
+      // 서버에서 현재 월의 일기 가져오기
+      final now = DateTime.now();
+      await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
+        now.year,
+        now.month,
+        userId,
+      );
 
       if (mounted) {
         Navigator.of(context).pushReplacement(

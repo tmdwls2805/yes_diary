@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 import 'dart:async';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
+import '../providers/user_provider.dart';
+import '../providers/diary_provider.dart';
 import 'nickname_setup_screen.dart';
 
-class MyScreen extends StatefulWidget {
+class MyScreen extends ConsumerStatefulWidget {
   const MyScreen({super.key});
 
   @override
-  State<MyScreen> createState() => _MyScreenState();
+  ConsumerState<MyScreen> createState() => _MyScreenState();
 }
 
-class _MyScreenState extends State<MyScreen> {
+class _MyScreenState extends ConsumerState<MyScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   late Timer _timer;
@@ -97,6 +100,27 @@ class _MyScreenState extends State<MyScreen> {
           },
         );
 
+        // UserProvider 업데이트 (userId, createdAt 저장)
+        final userId = user['id'].toString();
+        await ref.read(userProvider.notifier).saveUserId(userId);
+
+        if (user['createdAt'] != null) {
+          try {
+            final createdAt = DateTime.parse(user['createdAt']);
+            await ref.read(userProvider.notifier).saveCreatedAt(createdAt);
+          } catch (e) {
+            print('createdAt 파싱 실패: $e');
+          }
+        }
+
+        // 서버에서 현재 월의 일기 가져오기
+        final now = DateTime.now();
+        await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
+          now.year,
+          now.month,
+          userId,
+        );
+
         print('자동 로그인 완료: ${user['nickname']}');
 
         if (mounted) {
@@ -146,6 +170,106 @@ class _MyScreenState extends State<MyScreen> {
         }
 
         _showErrorDialog(errorMessage);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// 로그아웃 처리
+  Future<void> _handleLogout() async {
+    if (_isLoading) return;
+
+    // 확인 다이얼로그 표시
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            '로그아웃',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            '로그아웃 하시겠습니까?\n로컬 데이터로 전환됩니다.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                '취소',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                '로그아웃',
+                style: TextStyle(
+                  color: Color(0xFFFF4646),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. 서버 토큰 삭제
+      await TokenService.clearTokens();
+
+      // 2. 로컬 UUID로 복귀
+      final newUserId = await ref.read(userProvider.notifier).logout();
+
+      // 3. DiaryProvider 상태 초기화 (로컬 데이터를 다시 로드하기 위해)
+      // 현재 월의 데이터를 새 userId로 다시 로드
+      final now = DateTime.now();
+      final startDate = DateTime(now.year, now.month, 1);
+      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      await ref.read(diaryProvider.notifier).loadDiariesForRange(startDate, endDate, newUserId);
+
+      print('로그아웃 완료 - 새 로컬 userId: $newUserId');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('로그아웃 되었습니다'),
+            backgroundColor: Color(0xFF2A2A2A),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (error) {
+      print('로그아웃 실패: $error');
+      if (mounted) {
+        _showErrorDialog('로그아웃 중 오류가 발생했습니다.\n$error');
       }
     } finally {
       if (mounted) {
@@ -330,50 +454,95 @@ class _MyScreenState extends State<MyScreen> {
 
                   const SizedBox(height: 40),
 
-                  // 카카오 로그인 버튼
-                  Center(
-                    child: SizedBox(
-                      width: 358,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleKakaoLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFEE500),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+                  // 로그인 상태에 따른 버튼 표시
+                  FutureBuilder<bool>(
+                    future: TokenService.isLoggedIn(),
+                    builder: (context, snapshot) {
+                      final isLoggedIn = snapshot.data ?? false;
+
+                      if (isLoggedIn) {
+                        // 로그아웃 버튼
+                        return Center(
+                          child: SizedBox(
+                            width: 358,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _handleLogout,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF5C5C5C),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Image.asset(
-                                    'assets/icon/Kakao.png',
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    '카카오로 시작하기',
-                                    style: TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
                               ),
-                      ),
-                    ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : const Text(
+                                      '로그아웃',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        // 카카오 로그인 버튼
+                        return Center(
+                          child: SizedBox(
+                            width: 358,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _handleKakaoLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFEE500),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/icon/Kakao.png',
+                                          width: 24,
+                                          height: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          '카카오로 시작하기',
+                                          style: TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                   ),
 
                   const SizedBox(height: 16),

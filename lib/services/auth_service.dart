@@ -210,4 +210,50 @@ class AuthService {
       }
     }
   }
+
+  /// 월별 일기 조회
+  /// GET /api/diaries/monthly?year={year}&month={month}
+  /// 응답: {data: {year, month, totalCount, diaries: [...]}}
+  Future<List<Map<String, dynamic>>> getMonthlyDiaries(int year, int month) async {
+    try {
+      final response = await _dio.get(
+        '/diaries/monthly',
+        queryParameters: {
+          'year': year,
+          'month': month,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        if (data != null && data['diaries'] is List) {
+          return List<Map<String, dynamic>>.from(data['diaries']);
+        }
+        return [];
+      }
+      return [];
+    } catch (e) {
+      print('월별 일기 조회 오류: $e');
+      return [];
+    }
+  }
+
+  /// 단일 일기 조회
+  /// GET /api/diaries/{id}
+  Future<Map<String, dynamic>?> getDiaryById(int id) async {
+    try {
+      final response = await _dio.get('/diaries/$id');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        if (data != null) {
+          return data as Map<String, dynamic>;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('일기 조회 오류: $e');
+      return null;
+    }
+  }
 }

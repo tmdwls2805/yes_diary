@@ -21,4 +21,12 @@ class SecureStorageService {
   Future<String?> getCreatedAt() async {
     return await _storage.read(key: StorageKeys.createdAt);
   }
+
+  Future<void> saveLocalUserId(String localUserId) async {
+    await _storage.write(key: StorageKeys.localUserId, value: localUserId);
+  }
+
+  Future<String?> getLocalUserId() async {
+    return await _storage.read(key: StorageKeys.localUserId);
+  }
 } 
