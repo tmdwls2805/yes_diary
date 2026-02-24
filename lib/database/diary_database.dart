@@ -6,7 +6,7 @@ import '../models/emotion.dart';
 
 class DiaryDatabase {
   static const String _databaseName = 'diary_v4.db';  // 새 DB 파일 사용
-  static const int _databaseVersion = 1;  // 버전 1로 시작
+  static const int _databaseVersion = 5;  // 버전 5로 업데이트 (새 필드 추가)
   static const String _tableName = 'diary_entries';
   static const String _emotionsTableName = 'emotions';
 
@@ -66,6 +66,10 @@ class DiaryDatabase {
         content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
         emotion_id INTEGER NOT NULL,
         userId TEXT,
+        title TEXT,
+        serverId INTEGER,
+        createdAt TEXT,
+        updatedAt TEXT,
         FOREIGN KEY (emotion_id) REFERENCES $_emotionsTableName(id)
       );
     ''');
@@ -75,21 +79,30 @@ class DiaryDatabase {
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       // 버전 1에서 버전 2로 업그레이드: userId 컬럼 추가
-      await db.execute('ALTER TABLE $_tableName ADD COLUMN userId TEXT;');
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN userId TEXT;');
+      } catch (e) {
+        // 이미 컬럼이 존재하면 무시
+        print('userId column already exists, skipping: $e');
+      }
     }
     if (oldVersion < 3) {
       // 버전 2에서 버전 3으로 업그레이드: content 컬럼에 길이 제한 CHECK 제약조건 추가
-      await db.execute('''
-        CREATE TABLE temp_diary_entries (
-            date TEXT PRIMARY KEY,
-            content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
-            emotion TEXT NOT NULL,
-            userId TEXT
-        );
-      ''');
-      await db.execute('INSERT INTO temp_diary_entries SELECT date, content, emotion, userId FROM $_tableName;');
-      await db.execute('DROP TABLE $_tableName;');
-      await db.execute('ALTER TABLE temp_diary_entries RENAME TO $_tableName;');
+      try {
+        await db.execute('''
+          CREATE TABLE temp_diary_entries (
+              date TEXT PRIMARY KEY,
+              content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
+              emotion TEXT NOT NULL,
+              userId TEXT
+          );
+        ''');
+        await db.execute('INSERT INTO temp_diary_entries SELECT date, content, emotion, userId FROM $_tableName;');
+        await db.execute('DROP TABLE $_tableName;');
+        await db.execute('ALTER TABLE temp_diary_entries RENAME TO $_tableName;');
+      } catch (e) {
+        print('Version 3 migration already applied or column structure changed, skipping: $e');
+      }
     }
     if (oldVersion < 4) {
       // 버전 3에서 버전 4로 업그레이드: emotions 테이블 추가 및 emotion TEXT를 emotion_id INTEGER로 변경
@@ -185,6 +198,41 @@ class DiaryDatabase {
 
       // 9. 임시 테이블 삭제
       await db.execute('DROP TABLE temp_diary_entries;');
+    }
+
+    // 버전 5: title, serverId, createdAt, updatedAt 컬럼 추가
+    if (oldVersion < 5) {
+      final now = DateTime.now().toIso8601String();
+
+      // title 컬럼 추가
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN title TEXT;');
+      } catch (e) {
+        print('title column already exists, skipping: $e');
+      }
+
+      // serverId 컬럼 추가 (서버 ID 저장용)
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN serverId INTEGER;');
+      } catch (e) {
+        print('serverId column already exists, skipping: $e');
+      }
+
+      // createdAt 컬럼 추가 (기존 데이터는 현재 시간으로)
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN createdAt TEXT;');
+        await db.execute('UPDATE $_tableName SET createdAt = ? WHERE createdAt IS NULL;', [now]);
+      } catch (e) {
+        print('createdAt column already exists, skipping: $e');
+      }
+
+      // updatedAt 컬럼 추가 (기존 데이터는 현재 시간으로)
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN updatedAt TEXT;');
+        await db.execute('UPDATE $_tableName SET updatedAt = ? WHERE updatedAt IS NULL;', [now]);
+      } catch (e) {
+        print('updatedAt column already exists, skipping: $e');
+      }
     }
   }
 
