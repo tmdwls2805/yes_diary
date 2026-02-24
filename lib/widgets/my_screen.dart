@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:math' as math;
 import 'dart:async';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import '../services/auth_service.dart';
+import '../services/token_service.dart';
 
 class MyScreen extends StatefulWidget {
   const MyScreen({super.key});
@@ -16,6 +19,8 @@ class _MyScreenState extends State<MyScreen> {
   late Timer _timer;
   int _speechBubbleDirection = 0;
   double _currentRotation = -90.0; // 누적 회전 각도 (시작: -90도)
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -34,6 +39,207 @@ class _MyScreenState extends State<MyScreen> {
     _timer.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// 카카오 로그인 처리
+  Future<void> _handleKakaoLogin() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 1. 카카오톡 설치 여부 확인 후 로그인
+      OAuthToken token;
+      if (await isKakaoTalkInstalled()) {
+        try {
+          token = await UserApi.instance.loginWithKakaoTalk();
+          print('카카오톡으로 로그인 성공: ${token.accessToken}');
+        } catch (error) {
+          print('카카오톡으로 로그인 실패: $error');
+
+          // 카카오톡 로그인 실패 시 카카오계정으로 로그인 시도
+          if (mounted) {
+            token = await UserApi.instance.loginWithKakaoAccount();
+            print('카카오계정으로 로그인 성공: ${token.accessToken}');
+          } else {
+            return;
+          }
+        }
+      } else {
+        token = await UserApi.instance.loginWithKakaoAccount();
+        print('카카오계정으로 로그인 성공: ${token.accessToken}');
+      }
+
+      // 2. 서버에 사용자 존재 여부 확인 및 로그인
+      print('서버에 사용자 확인 요청 중... Token: ${token.accessToken.substring(0, 20)}...');
+      final result = await _authService.checkKakaoUser(token.accessToken);
+      print('서버 응답: $result');
+
+      final bool isExistingUser = result['existingUser'] ?? false;
+
+      if (isExistingUser && result['tokens'] != null) {
+        // 3-1. 기존 사용자: 토큰 저장 및 자동 로그인
+        final tokens = result['tokens'];
+        final user = tokens['user'];
+
+        await TokenService.saveTokens(
+          accessToken: tokens['accessToken'],
+          refreshToken: tokens['refreshToken'],
+          userInfo: {
+            'id': user['id'],
+            'nickname': user['nickname'],
+            'provider': user['provider'],
+            'createdAt': user['createdAt'],
+            'updatedAt': user['updatedAt'],
+          },
+        );
+
+        print('자동 로그인 완료: ${user['nickname']}');
+
+        if (mounted) {
+          _showUserCheckDialog(true, nickname: user['nickname']);
+        }
+      } else {
+        // 3-2. 신규 사용자: 회원가입 필요
+        final kakaoInfo = result['kakaoInfo'];
+        if (kakaoInfo != null) {
+          print('신규 사용자 - socialId: ${kakaoInfo['socialId']}');
+        } else {
+          print('신규 사용자');
+        }
+
+        if (mounted) {
+          _showUserCheckDialog(false);
+        }
+      }
+    } catch (error) {
+      print('카카오 로그인 실패: $error');
+      if (mounted) {
+        String errorMessage = '로그인 중 오류가 발생했습니다.';
+
+        if (error.toString().contains('bundleId validation failed')) {
+          errorMessage = 'iOS Bundle ID 설정 오류\n\n'
+              '카카오 개발자 콘솔에서 다음을 확인해주세요:\n'
+              '1. 플랫폼 설정 > iOS\n'
+              '2. Bundle ID: com.example.yesDiary\n\n'
+              '등록되어 있는지 확인해주세요.';
+        } else if (error.toString().contains('서버 오류: 500')) {
+          errorMessage = '서버 오류가 발생했습니다.\n\n'
+              '백엔드 서버가 실행 중인지 확인해주세요.\n'
+              'URL: http://localhost:8080/api/auth/kakao/check\n\n'
+              '서버 로그를 확인하여 오류 원인을\n파악해주세요.';
+        } else if (error.toString().contains('네트워크 오류')) {
+          errorMessage = '네트워크 연결 오류\n\n'
+              '서버가 실행 중인지 확인해주세요.\n'
+              'localhost:8080이 정상적으로\n접근 가능한지 확인해주세요.';
+        } else {
+          errorMessage += '\n\n상세 정보:\n$error';
+        }
+
+        _showErrorDialog(errorMessage);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// 사용자 확인 다이얼로그 표시
+  void _showUserCheckDialog(bool existingUser, {String? nickname}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            existingUser ? '로그인 성공' : '신규 사용자',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            existingUser
+                ? '환영합니다, ${nickname ?? '사용자'}님!\n자동 로그인되었습니다.'
+                : '회원가입이 필요합니다.\n닉네임을 설정해주세요.',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // TODO: 기존 사용자면 메인 화면으로, 신규 사용자면 닉네임 설정 화면으로 이동
+              },
+              child: const Text(
+                '확인',
+                style: TextStyle(
+                  color: Color(0xFFFEE500),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 에러 다이얼로그 표시
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            '오류',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                '확인',
+                style: TextStyle(
+                  color: Color(0xFFFEE500),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -123,10 +329,7 @@ class _MyScreenState extends State<MyScreen> {
                       width: 358,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: 카카오 로그인 구현
-                          print('카카오 로그인 버튼 클릭');
-                        },
+                        onPressed: _isLoading ? null : _handleKakaoLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFEE500),
                           elevation: 0,
@@ -134,25 +337,34 @@ class _MyScreenState extends State<MyScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset(
-                              'assets/icon/Kakao.png',
-                              width: 24,
-                              height: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              '카카오로 시작하기',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/icon/Kakao.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    '카카오로 시작하기',
+                                    style: TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
