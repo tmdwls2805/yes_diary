@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
+import 'nickname_setup_screen.dart';
 
 class MyScreen extends StatefulWidget {
   const MyScreen({super.key});
@@ -102,7 +103,7 @@ class _MyScreenState extends State<MyScreen> {
           _showUserCheckDialog(true, nickname: user['nickname']);
         }
       } else {
-        // 3-2. 신규 사용자: 회원가입 필요
+        // 3-2. 신규 사용자: 닉네임 설정 화면으로 이동
         final kakaoInfo = result['kakaoInfo'];
         if (kakaoInfo != null) {
           print('신규 사용자 - socialId: ${kakaoInfo['socialId']}');
@@ -111,7 +112,11 @@ class _MyScreenState extends State<MyScreen> {
         }
 
         if (mounted) {
-          _showUserCheckDialog(false);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const NicknameSetupScreen(),
+            ),
+          );
         }
       }
     } catch (error) {
@@ -160,7 +165,7 @@ class _MyScreenState extends State<MyScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           title: Text(
-            existingUser ? '로그인 성공' : '신규 사용자',
+            existingUser ? '로그인 성공' : '환영합니다!',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -170,7 +175,7 @@ class _MyScreenState extends State<MyScreen> {
           content: Text(
             existingUser
                 ? '환영합니다, ${nickname ?? '사용자'}님!\n자동 로그인되었습니다.'
-                : '회원가입이 필요합니다.\n닉네임을 설정해주세요.',
+                : '앗! 네의 일기에 가입해주셔서 감사해요.',
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 16,
