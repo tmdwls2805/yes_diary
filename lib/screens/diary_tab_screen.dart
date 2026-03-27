@@ -234,147 +234,147 @@ class _DiaryTabScreenState extends ConsumerState<DiaryTabScreen> with SingleTick
                       initialDate: userData.createdAt,
                     ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  if (_isBurning)
-                    Positioned.fill(
-                      child: AnimatedBuilder(
-                        animation: _pulseAnimation,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            painter: FireBackgroundPainter(
-                              animation: _pulseController.value,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _isBurning ? _pulseAnimation.value : 1.0,
-                        child: Container(
-                          width: double.infinity,
-                          height: 50.0,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(34.0),
-                            border: Border.all(
-                              color: _isBurning ? const Color(0xFFFF4400) : const Color(0x14FF0000),
-                              width: _isBurning ? 2.0 : 1.0,
-                            ),
-                            boxShadow: _isBurning ? [
-                              BoxShadow(
-                                color: const Color(0xFFFF4400).withOpacity(0.5),
-                                blurRadius: 25,
-                                spreadRadius: 3,
-                              ),
-                              BoxShadow(
-                                color: const Color(0xFFFFAA00).withOpacity(0.3),
-                                blurRadius: 40,
-                                spreadRadius: 10,
-                              ),
-                            ] : null,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(34.0),
-                            child: Stack(
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 500),
-                                  width: _fillPercentage * (MediaQuery.of(context).size.width - 32.0),
-                                  height: 50.0,
-                                  decoration: BoxDecoration(
-                                    color: _isBurning ? const Color(0xFFFF4400) : const Color(0xFFE22200),
-                                    boxShadow: _isBurning ? [
-                                      BoxShadow(
-                                        color: const Color(0xFFFF4400).withOpacity(0.6),
-                                        blurRadius: 20,
-                                        spreadRadius: 5,
-                                      ),
-                                    ] : null,
-                                  ),
-                                ),
-                                SizedBox.expand(
-                                  child: ElevatedButton(
-                                    onPressed: _isBurning ? null : () {
-                                      setState(() {
-                                        _clickCount = (_clickCount + 1).clamp(0, 100);
-                                        _fillPercentage = _clickCount / 100.0;
-                                      });
+            // Padding(
+            //   padding: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+            //   child: Stack(
+            //     clipBehavior: Clip.none,
+            //     children: [
+            //       if (_isBurning)
+            //         Positioned.fill(
+            //           child: AnimatedBuilder(
+            //             animation: _pulseAnimation,
+            //             builder: (context, child) {
+            //               return CustomPaint(
+            //                 painter: FireBackgroundPainter(
+            //                   animation: _pulseController.value,
+            //                 ),
+            //               );
+            //             },
+            //           ),
+            //         ),
+            //       AnimatedBuilder(
+            //         animation: _pulseAnimation,
+            //         builder: (context, child) {
+            //           return Transform.scale(
+            //             scale: _isBurning ? _pulseAnimation.value : 1.0,
+            //             child: Container(
+            //               width: double.infinity,
+            //               height: 50.0,
+            //               decoration: BoxDecoration(
+            //                 borderRadius: BorderRadius.circular(34.0),
+            //                 border: Border.all(
+            //                   color: _isBurning ? const Color(0xFFFF4400) : const Color(0x14FF0000),
+            //                   width: _isBurning ? 2.0 : 1.0,
+            //                 ),
+            //                 boxShadow: _isBurning ? [
+            //                   BoxShadow(
+            //                     color: const Color(0xFFFF4400).withOpacity(0.5),
+            //                     blurRadius: 25,
+            //                     spreadRadius: 3,
+            //                   ),
+            //                   BoxShadow(
+            //                     color: const Color(0xFFFFAA00).withOpacity(0.3),
+            //                     blurRadius: 40,
+            //                     spreadRadius: 10,
+            //                   ),
+            //                 ] : null,
+            //               ),
+            //               child: ClipRRect(
+            //                 borderRadius: BorderRadius.circular(34.0),
+            //                 child: Stack(
+            //                   children: [
+            //                     AnimatedContainer(
+            //                       duration: const Duration(milliseconds: 500),
+            //                       width: _fillPercentage * (MediaQuery.of(context).size.width - 32.0),
+            //                       height: 50.0,
+            //                       decoration: BoxDecoration(
+            //                         color: _isBurning ? const Color(0xFFFF4400) : const Color(0xFFE22200),
+            //                         boxShadow: _isBurning ? [
+            //                           BoxShadow(
+            //                             color: const Color(0xFFFF4400).withOpacity(0.6),
+            //                             blurRadius: 20,
+            //                             spreadRadius: 5,
+            //                           ),
+            //                         ] : null,
+            //                       ),
+            //                     ),
+            //                     SizedBox.expand(
+            //                       child: ElevatedButton(
+            //                         onPressed: _isBurning ? null : () {
+            //                           setState(() {
+            //                             _clickCount = (_clickCount + 1).clamp(0, 100);
+            //                             _fillPercentage = _clickCount / 100.0;
+            //                           });
 
-                                      if (_clickCount >= 100 && !_isBurning) {
-                                        _startBurningEffect();
-                                      } else {
-                                        _startDecayTimer();
-                                        _createParticles();
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(34.0),
-                                      ),
-                                      side: BorderSide.none,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: RichText(
-                                            text: const TextSpan(
-                                              children: [
-                                                TextSpan(
-                                                  text: '🔥 ',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.normal,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: '퇴사',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                TextSpan(
-                                                  text: '하고 싶을 때 누르는 버튼',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.normal,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        SvgPicture.asset(
-                                          'assets/emotion/red.svg',
-                                          width: 40,
-                                          height: 40,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+            //                           if (_clickCount >= 100 && !_isBurning) {
+            //                             _startBurningEffect();
+            //                           } else {
+            //                             _startDecayTimer();
+            //                             _createParticles();
+            //                           }
+            //                         },
+            //                         style: ElevatedButton.styleFrom(
+            //                           backgroundColor: Colors.transparent,
+            //                           elevation: 0,
+            //                           shape: RoundedRectangleBorder(
+            //                             borderRadius: BorderRadius.circular(34.0),
+            //                           ),
+            //                           side: BorderSide.none,
+            //                         ),
+            //                         child: Row(
+            //                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                           children: [
+            //                             Expanded(
+            //                               child: RichText(
+            //                                 text: const TextSpan(
+            //                                   children: [
+            //                                     TextSpan(
+            //                                       text: '🔥 ',
+            //                                       style: TextStyle(
+            //                                         color: Colors.white,
+            //                                         fontSize: 16.0,
+            //                                         fontWeight: FontWeight.normal,
+            //                                       ),
+            //                                     ),
+            //                                     TextSpan(
+            //                                       text: '퇴사',
+            //                                       style: TextStyle(
+            //                                         color: Colors.white,
+            //                                         fontSize: 16.0,
+            //                                         fontWeight: FontWeight.bold,
+            //                                       ),
+            //                                     ),
+            //                                     TextSpan(
+            //                                       text: '하고 싶을 때 누르는 버튼',
+            //                                       style: TextStyle(
+            //                                         color: Colors.white,
+            //                                         fontSize: 16.0,
+            //                                         fontWeight: FontWeight.normal,
+            //                                       ),
+            //                                     ),
+            //                                   ],
+            //                                 ),
+            //                               ),
+            //                             ),
+            //                             SvgPicture.asset(
+            //                               'assets/emotion/red.svg',
+            //                               width: 40,
+            //                               height: 40,
+            //                             ),
+            //                           ],
+            //                         ),
+            //                       ),
+            //                     ),
+            //                   ],
+            //                 ),
+            //               ),
+            //             ),
+            //           );
+            //         },
+            //       ),
+            //     ],
+            //   ),
+            // ),
           ],
         ),
         ..._particles.map((particle) => FireParticle(particle: particle)),
