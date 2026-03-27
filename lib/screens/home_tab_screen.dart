@@ -36,7 +36,7 @@ class HomeTabScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeTabScreen> createState() => _HomeTabScreenState();
 }
 
-class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
+class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProviderStateMixin {
   // 임시: 현재 시간대 설정 (테스트용)
   TimeState currentTimeState = TimeState.workTime;
   List<BubbleModel> _bubbles = [];
@@ -46,6 +46,19 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
   DateTime? _lastClickTime; // 마지막 클릭 시간
   static const Duration _clickCooldown = Duration(milliseconds: 500); // 0.5초 쿨다운
   int _bubbleIdCounter = 0; // 버블 고유 ID 카운터
+  late AnimationController _lottieController;
+
+  @override
+  void initState() {
+    super.initState();
+    _lottieController = AnimationController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _lottieController.dispose();
+    super.dispose();
+  }
 
 
   TimeState _getCurrentTimeState() {
@@ -63,6 +76,15 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
           'assets/home/work_time.json',
           width: double.infinity,
           fit: BoxFit.fitWidth,
+          controller: _lottieController,
+          onLoaded: (composition) {
+            // 속도 조절: 0.6배 속도 = 원본 시간의 1.67배 길이
+            _lottieController.duration = Duration(
+              milliseconds: (composition.duration.inMilliseconds / 0.6).round(),
+            );
+            _lottieController.forward();
+            _lottieController.repeat();
+          },
         );
       case TimeState.nightWorkTime:
         return Image.asset(
@@ -157,23 +179,31 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             Column(
               children: [
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // 애니메이션/이미지 - 시간대에 따라 변경
-                      Center(
-                        child: GestureDetector(
-                          onTap: _createBubbles,
-                          child: _getAnimationForTimeState(timeState),
-                        ),
-                      ),
+                  child: Center(
+                    child: Transform.translate(
+                      offset: const Offset(0, 0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 부서 태그 - 시간대에 따라 변경
+                          Transform.translate(
+                            offset: const Offset(0, -40),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
+                            ),
+                          ),
 
-                      // 부서 태그 - 시간대에 따라 변경
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
+                          const SizedBox(height: 40),
+
+                          // 애니메이션/이미지 - 시간대에 따라 변경
+                          GestureDetector(
+                            onTap: _createBubbles,
+                            child: _getAnimationForTimeState(timeState),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
 
