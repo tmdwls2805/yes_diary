@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 enum TimeState {
   workTime,      // 근무 시간
@@ -17,7 +18,7 @@ class HomeTabScreen extends ConsumerStatefulWidget {
 
 class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
   // 임시: 현재 시간대 설정 (테스트용)
-  TimeState currentTimeState = TimeState.nightWorkTime;
+  TimeState currentTimeState = TimeState.workTime;
 
   TimeState _getCurrentTimeState() {
     // TODO: 실제 시간에 따라 TimeState 반환
@@ -27,16 +28,32 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
     return currentTimeState;
   }
 
-  String _getImageForTimeState(TimeState state) {
+  Widget _getAnimationForTimeState(TimeState state) {
     switch (state) {
       case TimeState.workTime:
-        return 'assets/home/work_time.png';
+        return Lottie.asset(
+          'assets/home/work_time.json',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+        );
       case TimeState.nightWorkTime:
-        return 'assets/home/night_work_time.png';
+        return Image.asset(
+          'assets/home/night_work_time.png',
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+        );
       case TimeState.wakeUpTime:
-        return 'assets/home/wake_up_time.png'; // 나중에 추가
+        return Image.asset(
+          'assets/home/wake_up_time.png', // 나중에 추가
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+        );
       case TimeState.bedTime:
-        return 'assets/home/bed_time.png'; // 나중에 추가
+        return Image.asset(
+          'assets/home/bed_time.png', // 나중에 추가
+          width: double.infinity,
+          fit: BoxFit.fitWidth,
+        );
     }
   }
 
@@ -63,26 +80,18 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
         child: Column(
           children: [
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Stack(
                 children: [
-                  // 부서 태그 - 시간대에 따라 변경
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
+                  // 애니메이션/이미지 - 시간대에 따라 변경
+                  Center(
+                    child: _getAnimationForTimeState(timeState),
                   ),
 
-                  const SizedBox(height: 70),
-
-                  // 이미지 - 시간대에 따라 변경 (고정 높이로 통일)
-                  SizedBox(
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.width * (278 / 393), // 큰 이미지 비율 기준
-                    child: Image.asset(
-                      _getImageForTimeState(timeState),
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                    ),
+                  // 부서 태그 - 시간대에 따라 변경
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
                   ),
                 ],
               ),
@@ -100,14 +109,14 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                     backgroundColor: const Color(0xFF6E6E6E),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: const Text(
                     '버튼',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                      color: Color(0xFFBDBDBD),
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -123,7 +132,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
   Widget _buildDepartmentTag(String text) {
     return IntrinsicWidth(
       child: Container(
-        height: 62,
+        height: 45,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         decoration: const BoxDecoration(
           color: Color(0xFF7F7F7F),
@@ -138,7 +147,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Color(0xFFA5A5A5),
-            fontSize: 24,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),

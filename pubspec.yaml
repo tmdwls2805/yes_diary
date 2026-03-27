@@ -59,6 +59,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   kakao_flutter_sdk_user: ^1.9.6  # 카카오 로그인
   flutter_dotenv: ^5.1.0  # 환경변수 관리
+  lottie: ^3.1.0  # Lottie 애니메이션
 
 dev_dependencies:
   flutter_test:
