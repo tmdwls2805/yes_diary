@@ -394,7 +394,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                   },
                   children: [
                     _buildFirstContent(),
-                    _buildSecondContent(),
+                    _buildSecondContent(), // 퇴사 관련 페이지 숨김
                   ],
                 ),
               ),
@@ -417,7 +417,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // 두 번째 페이지일 때만 보이는 안내 텍스트
+                  // 두 번째 페이지일 때만 보이는 안내 텍스트 (숨김)
                   if (_currentPage == 1) ...[
                     const Text(
                       '퇴사 생각나신다고요?\n감쓰 리포트를 확인해 보세요!',
@@ -432,7 +432,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // 인디케이터
+                  // 인디케이터 (숨김 - 페이지가 1개만 있음)
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -547,7 +547,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 애플 로그인 버튼
+                  // 애플 로그인 버튼 (숨김)
                   Center(
                     child: SizedBox(
                       width: 358,

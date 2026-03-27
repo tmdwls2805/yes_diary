@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yes_diary/screens/home_tab_screen.dart';
 import 'package:yes_diary/screens/diary_tab_screen.dart';
 import 'package:yes_diary/widgets/my_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -20,7 +21,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       canPop: false,
       onPopInvoked: (didPop) {
         if (didPop) return;
-        if (_selectedIndex == 1) {
+        if (_selectedIndex != 0) {
           setState(() {
             _selectedIndex = 0;
           });
@@ -45,6 +46,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 icon: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: _selectedIndex == 0
+                      ? SvgPicture.asset('assets/icon/menu_marker_active.svg', width: 24, height: 24)
+                      : SvgPicture.asset('assets/icon/menu_marker_inactive.svg', width: 24, height: 24),
+                ),
+                label: '회사',
+              ),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: _selectedIndex == 1
                       ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 24, height: 24)
                       : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 24, height: 24),
                 ),
@@ -53,7 +63,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               BottomNavigationBarItem(
                 icon: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: _selectedIndex == 1
+                  child: _selectedIndex == 2
                       ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 24, height: 24)
                       : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 24, height: 24),
                 ),
@@ -78,10 +88,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Widget _buildBody() {
-    if (_selectedIndex == 1) {
-      return const MyScreen();
+    switch (_selectedIndex) {
+      case 0:
+        return const HomeTabScreen();
+      case 1:
+        return const DiaryTabScreen();
+      case 2:
+        return const MyScreen();
+      default:
+        return const HomeTabScreen();
     }
-    return const DiaryTabScreen();
   }
 
   void _onItemTapped(int index) {

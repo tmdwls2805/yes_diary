@@ -93,6 +93,7 @@ flutter:
     - assets/icon/
     - assets/emotion/
     - assets/button/
+    - assets/home/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
