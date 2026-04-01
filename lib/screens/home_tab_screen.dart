@@ -87,22 +87,49 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
           },
         );
       case TimeState.nightWorkTime:
-        return Image.asset(
-          'assets/home/night_work_time.png',
+        return Lottie.asset(
+          'assets/home/night_work_time.json',
           width: double.infinity,
           fit: BoxFit.fitWidth,
+          controller: _lottieController,
+          onLoaded: (composition) {
+            // 속도 조절: 0.6배 속도 = 원본 시간의 1.67배 길이
+            _lottieController.duration = Duration(
+              milliseconds: (composition.duration.inMilliseconds / 0.6).round(),
+            );
+            _lottieController.forward();
+            _lottieController.repeat();
+          },
         );
       case TimeState.wakeUpTime:
-        return Image.asset(
-          'assets/home/wake_up_time.png', // 나중에 추가
+        return Lottie.asset(
+          'assets/home/wake_up_time.json',
           width: double.infinity,
           fit: BoxFit.fitWidth,
+          controller: _lottieController,
+          onLoaded: (composition) {
+            // 속도 조절: 0.6배 속도 = 원본 시간의 1.67배 길이
+            _lottieController.duration = Duration(
+              milliseconds: (composition.duration.inMilliseconds / 0.6).round(),
+            );
+            _lottieController.forward();
+            _lottieController.repeat();
+          },
         );
       case TimeState.bedTime:
-        return Image.asset(
-          'assets/home/bed_time.png', // 나중에 추가
+        return Lottie.asset(
+          'assets/home/bed_time.json',
           width: double.infinity,
           fit: BoxFit.fitWidth,
+          controller: _lottieController,
+          onLoaded: (composition) {
+            // 속도 조절: 0.6배 속도 = 원본 시간의 1.67배 길이
+            _lottieController.duration = Duration(
+              milliseconds: (composition.duration.inMilliseconds / 0.6).round(),
+            );
+            _lottieController.forward();
+            _lottieController.repeat();
+          },
         );
     }
   }
@@ -176,65 +203,87 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
       body: SafeArea(
         child: Stack(
           children: [
+            // 메인 컨텐츠
             Column(
               children: [
                 Expanded(
-                  child: Center(
-                    child: Transform.translate(
-                      offset: const Offset(0, 0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 부서 태그 - 시간대에 따라 변경
-                          Transform.translate(
-                            offset: const Offset(0, -40),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
+                  child: timeState == TimeState.bedTime
+                      ? Stack(
+                          children: [
+                            // 취침 애니메이션 - 전체 화면 채우기
+                            Positioned.fill(
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: GestureDetector(
+                                  onTap: _createBubbles,
+                                  child: _getAnimationForTimeState(timeState),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: Transform.translate(
+                            offset: Offset(0, timeState == TimeState.wakeUpTime ? -60 : 0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // 부서 태그 - 시간대에 따라 변경 (기상/취침 시간은 숨김)
+                                if (timeState != TimeState.wakeUpTime && timeState != TimeState.bedTime)
+                                  Transform.translate(
+                                    offset: const Offset(0, -40),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
+                                    ),
+                                  ),
+
+                                const SizedBox(height: 40),
+
+                                // 애니메이션/이미지 - 시간대에 따라 변경
+                                GestureDetector(
+                                  onTap: _createBubbles,
+                                  child: _getAnimationForTimeState(timeState),
+                                ),
+                              ],
                             ),
                           ),
-
-                          const SizedBox(height: 40),
-
-                          // 애니메이션/이미지 - 시간대에 따라 변경
-                          GestureDetector(
-                            onTap: _createBubbles,
-                            child: _getAnimationForTimeState(timeState),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
                 ),
 
-                // 버튼
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 40),
-                  child: SizedBox(
-                    width: 358,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6E6E6E),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        '버튼',
-                        style: TextStyle(
-                          color: Color(0xFFBDBDBD),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                // TimeState 전환 버튼들 - 취침이 아닐 때만 여기 표시
+                if (timeState != TimeState.bedTime)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 40, left: 16, right: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildTimeStateButton('근무', TimeState.workTime),
+                        _buildTimeStateButton('야근', TimeState.nightWorkTime),
+                        _buildTimeStateButton('기상', TimeState.wakeUpTime),
+                        _buildTimeStateButton('취침', TimeState.bedTime),
+                      ],
                     ),
                   ),
-                ),
               ],
             ),
+
+            // 취침일 때만 버튼을 애니메이션 위에 겹쳐서 표시
+            if (timeState == TimeState.bedTime)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 40,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildTimeStateButton('근무', TimeState.workTime),
+                    _buildTimeStateButton('야근', TimeState.nightWorkTime),
+                    _buildTimeStateButton('기상', TimeState.wakeUpTime),
+                    _buildTimeStateButton('취침', TimeState.bedTime),
+                  ],
+                ),
+              ),
 
             // 버블 애니메이션들
             ..._bubbles.map((bubble) => BubbleWidget(
@@ -268,6 +317,40 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
             color: Color(0xFFA5A5A5),
             fontSize: 22,
             fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimeStateButton(String label, TimeState state) {
+    final isSelected = currentTimeState == state;
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: SizedBox(
+          height: 56,
+          child: ElevatedButton(
+            onPressed: () {
+              setState(() {
+                currentTimeState = state;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSelected ? const Color(0xFF6E6E6E) : const Color(0xFF3A3A3A),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFFBDBDBD) : const Color(0xFF6E6E6E),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ),

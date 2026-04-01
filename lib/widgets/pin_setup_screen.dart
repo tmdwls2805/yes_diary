@@ -8,12 +8,12 @@ import '../providers/diary_provider.dart';
 
 class PinSetupScreen extends ConsumerStatefulWidget {
   final String nickname;
-  final String kakaoAccessToken;
+  final String? kakaoAccessToken;
 
   const PinSetupScreen({
     super.key,
     required this.nickname,
-    required this.kakaoAccessToken,
+    this.kakaoAccessToken,
   });
 
   @override
@@ -56,10 +56,21 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     });
 
     try {
+      // kakaoAccessToken이 없으면 (애플 로그인 등) 바로 감사 화면으로 이동
+      if (widget.kakaoAccessToken == null) {
+        print('임시: 카카오 토큰 없이 진행 (애플 로그인 등)');
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const ThankYouScreen()),
+          );
+        }
+        return;
+      }
+
       // 서버에 닉네임 + PIN으로 회원가입
       print('회원가입 시도: nickname=${widget.nickname}, password=$pin');
       final result = await _authService.signupWithKakao(
-        accessToken: widget.kakaoAccessToken,
+        accessToken: widget.kakaoAccessToken!,
         nickname: widget.nickname,
         password: pin,
       );
@@ -123,10 +134,21 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     });
 
     try {
+      // kakaoAccessToken이 없으면 (애플 로그인 등) 바로 감사 화면으로 이동
+      if (widget.kakaoAccessToken == null) {
+        print('임시: 카카오 토큰 없이 건너뛰기 (애플 로그인 등)');
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const ThankYouScreen()),
+          );
+        }
+        return;
+      }
+
       // 건너뛰기: PIN 없이 닉네임만으로 회원가입
       print('회원가입 시도 (PIN 없이): nickname=${widget.nickname}');
       final result = await _authService.signupWithKakao(
-        accessToken: widget.kakaoAccessToken,
+        accessToken: widget.kakaoAccessToken!,
         nickname: widget.nickname,
       );
 

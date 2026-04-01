@@ -3,11 +3,11 @@ import 'dart:math';
 import 'pin_setup_screen.dart';
 
 class NicknameSetupScreen extends StatefulWidget {
-  final String kakaoAccessToken;
+  final String? kakaoAccessToken;
 
   const NicknameSetupScreen({
     super.key,
-    required this.kakaoAccessToken,
+    this.kakaoAccessToken,
   });
 
   @override

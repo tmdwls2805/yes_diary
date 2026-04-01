@@ -26,6 +26,8 @@ class _MyScreenState extends ConsumerState<MyScreen> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
+  Timer? _autoScrollTimer;
+
   @override
   void initState() {
     super.initState();
@@ -36,11 +38,24 @@ class _MyScreenState extends ConsumerState<MyScreen> {
         _currentRotation -= 72.0; // 무조건 시계 반대방향으로 72도씩 회전
       });
     });
+
+    // 5초마다 페이지 자동 넘김
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (_pageController.hasClients) {
+        final nextPage = (_currentPage + 1) % 2; // 0 <-> 1 반복
+        _pageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
     _timer.cancel();
+    _autoScrollTimer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
@@ -547,15 +562,21 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
                   const SizedBox(height: 16),
 
-                  // 애플 로그인 버튼 (숨김)
+                  // 애플 로그인 버튼
                   Center(
                     child: SizedBox(
                       width: 358,
                       height: 56,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: 애플 로그인 구현
-                          print('애플 로그인 버튼 클릭');
+                          // 임시: 카카오와 동일한 프로세스로 이동 (닉네임 설정 화면)
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const NicknameSetupScreen(
+                                kakaoAccessToken: null, // 애플 로그인은 임시로 null
+                              ),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
