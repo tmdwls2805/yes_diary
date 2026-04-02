@@ -250,61 +250,64 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.062),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: screenHeight * 0.024),
 
               // 뒤로가기 버튼
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).pop();
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
                   color: Colors.white,
-                  size: 24,
+                  size: screenWidth * 0.062,
                 ),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: screenHeight * 0.014),
 
               // 환영 메시지
-              const Text(
+              Text(
                 '앗! 네의 일기에\n가입해주셔서 감사해요.',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: screenWidth * 0.062,
                   fontWeight: FontWeight.bold,
                   height: 1.4,
                 ),
               ),
 
-              const SizedBox(height: 49),
+              SizedBox(height: screenHeight * 0.058),
 
               // 비밀번호 설정 안내
-              const Text(
+              Text(
                 '앗! 네의 일기를 다른 사람들이 보는 건 곤란하죠.\n앱에 사용할 비밀번호를 입력해주세요.',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: screenWidth * 0.041,
                 ),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // PIN 입력 박스 4개
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(4, (index) {
                   return Container(
-                    width: 79,
-                    height: 56,
+                    width: screenWidth * 0.203,
+                    height: screenHeight * 0.066,
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Colors.white12,
@@ -320,9 +323,9 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       maxLength: 1,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: screenWidth * 0.062,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: const InputDecoration(
@@ -343,25 +346,25 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                 }),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // 유효성 메시지
-              const Text(
+              Text(
                 '*비밀번호는 설정하지 않아도 괜찮아요.',
                 style: TextStyle(
-                  color: Color(0xFFFF9E9E),
-                  fontSize: 12,
+                  color: const Color(0xFFFF9E9E),
+                  fontSize: screenWidth * 0.031,
                 ),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // 건너뛰기 + 확인 버튼
               Row(
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 56,
+                      height: screenHeight * 0.066,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSkip,
                         style: ElevatedButton.styleFrom(
@@ -372,21 +375,21 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           '건너뛰기',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: screenWidth * 0.041,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: screenWidth * 0.031),
                   Expanded(
                     child: SizedBox(
-                      height: 56,
+                      height: screenHeight * 0.066,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handlePinSubmit,
                         style: ElevatedButton.styleFrom(
@@ -398,19 +401,19 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                           ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
+                            ? SizedBox(
+                                width: screenWidth * 0.062,
+                                height: screenWidth * 0.062,
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text(
+                            : Text(
                                 '확인',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: screenWidth * 0.041,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
@@ -420,7 +423,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                 ],
               ),
 
-              const SizedBox(height: 40),
+              SizedBox(height: screenHeight * 0.047),
             ],
           ),
         ),

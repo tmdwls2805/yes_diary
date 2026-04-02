@@ -121,52 +121,55 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.062),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
+              SizedBox(height: screenHeight * 0.024),
 
               // 뒤로가기 버튼
               GestureDetector(
                 onTap: () {
                   Navigator.of(context).pop();
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back,
                   color: Colors.white,
-                  size: 24,
+                  size: screenWidth * 0.062,
                 ),
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: screenHeight * 0.014),
 
               // 환영 메시지
-              const Text(
+              Text(
                 '앗! 네의 일기에\n가입해주셔서 감사해요.',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: screenWidth * 0.062,
                   fontWeight: FontWeight.bold,
                   height: 1.4,
                 ),
               ),
 
-              const SizedBox(height: 49),
+              SizedBox(height: screenHeight * 0.058),
 
-              const Text(
+              Text(
                 '앗! 네의 일기에서 사용하실 닉네임을 알려주세요',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: screenWidth * 0.041,
                 ),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // 닉네임 입력 필드 (테두리 박스 스타일)
               Container(
@@ -182,9 +185,9 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                   controller: _nicknameController,
                   enabled: !_isLoading,
                   maxLength: 10,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: screenWidth * 0.041,
                   ),
                   decoration: InputDecoration(
                     hintText: '닉네임',
@@ -192,16 +195,22 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                       color: Colors.white38,
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.062,
+                      vertical: screenHeight * 0.019,
+                    ),
                     counterText: '',
                     suffixIcon: GestureDetector(
                       onTap: _generateRandomNickname,
                       child: Padding(
-                        padding: const EdgeInsets.only(left: 12.0, right: 24.0),
+                        padding: EdgeInsets.only(
+                          left: screenWidth * 0.031,
+                          right: screenWidth * 0.062,
+                        ),
                         child: Image.asset(
                           'assets/icon/dice.png',
-                          width: 24,
-                          height: 24,
+                          width: screenWidth * 0.062,
+                          height: screenWidth * 0.062,
                         ),
                       ),
                     ),
@@ -210,23 +219,23 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                 ),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // 유효성 메시지
-              const Text(
+              Text(
                 '*닉네임 정하기 어렵다면 주사위로 정해보세요.',
                 style: TextStyle(
-                  color: Color(0xFFFF9E9E),
-                  fontSize: 12,
+                  color: const Color(0xFFFF9E9E),
+                  fontSize: screenWidth * 0.031,
                 ),
               ),
 
-              const SizedBox(height: 14),
+              SizedBox(height: screenHeight * 0.017),
 
               // 완료 버튼
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: screenHeight * 0.066,
                 child: ElevatedButton(
                   onPressed: _handleSubmit,
                   style: ElevatedButton.styleFrom(
@@ -237,18 +246,18 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     '이 닉네임 사용하기',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: screenWidth * 0.041,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 40),
+              SizedBox(height: screenHeight * 0.047),
             ],
           ),
         ),

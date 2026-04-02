@@ -483,6 +483,8 @@ class _FireParticleState extends State<FireParticle> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -495,9 +497,9 @@ class _FireParticleState extends State<FireParticle> with SingleTickerProviderSt
               scale: _scale.value,
               child: Transform.rotate(
                 angle: _rotation.value * pi / 180,
-                child: const Text(
+                child: Text(
                   '🔥',
-                  style: TextStyle(fontSize: 40),
+                  style: TextStyle(fontSize: screenWidth * 0.103), // 40 / 390 ≈ 0.103
                 ),
               ),
             ),

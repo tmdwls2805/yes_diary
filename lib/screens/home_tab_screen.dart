@@ -165,13 +165,14 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final centerX = screenWidth / 2;
+    final bubbleWidth = screenWidth * 0.375; // 버블 너비 (화면 너비의 37.5%)
 
     // 왼쪽/오른쪽 번갈아가며
     final bubblePath = _isLeftTurn ? 'assets/home/bubble_1.svg' : 'assets/home/bubble_2.svg';
     final bubbleX = _isLeftTurn
-        ? _random.nextDouble() * (centerX - 146) // 왼쪽 영역
-        : centerX + _random.nextDouble() * (centerX - 146); // 오른쪽 영역
-    final bubbleY = screenHeight * 0.7 + _random.nextDouble() * 100;
+        ? _random.nextDouble() * (centerX - bubbleWidth) // 왼쪽 영역
+        : centerX + _random.nextDouble() * (centerX - bubbleWidth); // 오른쪽 영역
+    final bubbleY = screenHeight * 0.7 + _random.nextDouble() * (screenHeight * 0.12);
 
     final bubble = BubbleModel(
       id: _bubbleIdCounter++,
@@ -197,6 +198,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
     final timeState = _getCurrentTimeState();
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
@@ -224,21 +227,21 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
                         )
                       : Center(
                           child: Transform.translate(
-                            offset: Offset(0, timeState == TimeState.wakeUpTime ? -60 : 0),
+                            offset: Offset(0, timeState == TimeState.wakeUpTime ? -screenHeight * 0.08 : 0),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 // 부서 태그 - 시간대에 따라 변경 (기상/취침 시간은 숨김)
                                 if (timeState != TimeState.wakeUpTime && timeState != TimeState.bedTime)
                                   Transform.translate(
-                                    offset: const Offset(0, -40),
+                                    offset: Offset(0, -screenHeight * 0.05),
                                     child: Align(
                                       alignment: Alignment.centerLeft,
                                       child: _buildDepartmentTag(_getDepartmentNameForTimeState(timeState)),
                                     ),
                                   ),
 
-                                const SizedBox(height: 40),
+                                SizedBox(height: screenHeight * 0.05),
 
                                 // 애니메이션/이미지 - 시간대에 따라 변경
                                 GestureDetector(
@@ -254,7 +257,11 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
                 // TimeState 전환 버튼들 - 취침이 아닐 때만 여기 표시
                 if (timeState != TimeState.bedTime)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 40, left: 16, right: 16),
+                    padding: EdgeInsets.only(
+                      bottom: screenHeight * 0.05,
+                      left: screenWidth * 0.04,
+                      right: screenWidth * 0.04,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -271,9 +278,9 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
             // 취침일 때만 버튼을 애니메이션 위에 겹쳐서 표시
             if (timeState == TimeState.bedTime)
               Positioned(
-                left: 16,
-                right: 16,
-                bottom: 40,
+                left: screenWidth * 0.04,
+                right: screenWidth * 0.04,
+                bottom: screenHeight * 0.05,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -290,6 +297,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
               key: ValueKey(bubble.id),
               bubble: bubble,
               onComplete: () => _removeBubble(bubble.id),
+              screenWidth: screenWidth,
             )),
           ],
         ),
@@ -298,10 +306,13 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
   }
 
   Widget _buildDepartmentTag(String text) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return IntrinsicWidth(
       child: Container(
-        height: 45,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        height: screenHeight * 0.055,
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06, vertical: screenHeight * 0.01),
         decoration: const BoxDecoration(
           color: Color(0xFF7F7F7F),
           borderRadius: BorderRadius.only(
@@ -313,9 +324,9 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFFA5A5A5),
-            fontSize: 22,
+          style: TextStyle(
+            color: const Color(0xFFA5A5A5),
+            fontSize: screenWidth * 0.056,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -325,11 +336,14 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
 
   Widget _buildTimeStateButton(String label, TimeState state) {
     final isSelected = currentTimeState == state;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
         child: SizedBox(
-          height: 56,
+          height: screenHeight * 0.07,
           child: ElevatedButton(
             onPressed: () {
               setState(() {
@@ -347,7 +361,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
               label,
               style: TextStyle(
                 color: isSelected ? const Color(0xFFBDBDBD) : const Color(0xFF6E6E6E),
-                fontSize: 16,
+                fontSize: screenWidth * 0.041,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -362,8 +376,14 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
 class BubbleWidget extends StatefulWidget {
   final BubbleModel bubble;
   final VoidCallback onComplete;
+  final double screenWidth;
 
-  const BubbleWidget({super.key, required this.bubble, required this.onComplete});
+  const BubbleWidget({
+    super.key,
+    required this.bubble,
+    required this.onComplete,
+    required this.screenWidth,
+  });
 
   @override
   State<BubbleWidget> createState() => _BubbleWidgetState();
@@ -412,6 +432,9 @@ class _BubbleWidgetState extends State<BubbleWidget> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final bubbleWidth = widget.screenWidth * 0.375; // 146 / 390 ≈ 0.375
+    final bubbleHeight = widget.screenWidth * 0.131; // 51 / 390 ≈ 0.131
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -423,8 +446,8 @@ class _BubbleWidgetState extends State<BubbleWidget> with SingleTickerProviderSt
               opacity: _opacity.value,
               child: SvgPicture.asset(
                 widget.bubble.svgPath,
-                width: 146,
-                height: 51,
+                width: bubbleWidth,
+                height: bubbleHeight,
               ),
             ),
           ),
