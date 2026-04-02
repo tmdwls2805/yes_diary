@@ -1,0 +1,44 @@
+{
+  "app_name": "イエス日記",
+  "home": {
+    "work": "勤務",
+    "night_work": "残業",
+    "wake_up": "起床",
+    "bed_time": "就寝",
+    "department_work": "研究チーム",
+    "department_night": "残業中のチーム"
+  },
+  "diary": {
+    "title": "日記",
+    "write": "日記を書く",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集"
+  },
+  "my": {
+    "title": "マイ",
+    "logout": "ログアウト",
+    "logout_confirm": "ログアウトしますか?\nローカルデータに切り替わります。",
+    "logout_success": "ログアウトしました"
+  },
+  "auth": {
+    "welcome": "イエス日記に\nご登録ありがとうございます！",
+    "nickname_prompt": "イエス日記で使用するニックネームを教えてください",
+    "nickname_hint": "ニックネーム",
+    "nickname_random_hint": "*ニックネームが決められない場合は、サイコロで決めてみてください。",
+    "nickname_use": "このニックネームを使う",
+    "password_prompt": "他の人に日記を見られるのは困りますね。\nアプリで使用するパスワードを入力してください。",
+    "password_skip_hint": "*パスワードは設定しなくても大丈夫です。",
+    "skip": "スキップ",
+    "confirm": "確認",
+    "login_with_kakao": "カカオでスタート",
+    "login_with_apple": "Appleでスタート"
+  },
+  "common": {
+    "ok": "確認",
+    "cancel": "キャンセル",
+    "error": "エラー",
+    "loading": "読み込み中..."
+  }
+}

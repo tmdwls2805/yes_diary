@@ -1,0 +1,44 @@
+{
+  "app_name": "是的日记",
+  "home": {
+    "work": "上班",
+    "night_work": "加班",
+    "wake_up": "起床",
+    "bed_time": "睡觉",
+    "department_work": "研究团队",
+    "department_night": "加班团队"
+  },
+  "diary": {
+    "title": "日记",
+    "write": "写日记",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑"
+  },
+  "my": {
+    "title": "我的",
+    "logout": "退出登录",
+    "logout_confirm": "确定要退出登录吗？\n将切换到本地数据。",
+    "logout_success": "已退出登录"
+  },
+  "auth": {
+    "welcome": "感谢您加入\n是的日记！",
+    "nickname_prompt": "请告诉我们您在是的日记中使用的昵称",
+    "nickname_hint": "昵称",
+    "nickname_random_hint": "*如果难以决定，可以试试骰子！",
+    "nickname_use": "使用此昵称",
+    "password_prompt": "我们不希望别人看到您的日记。\n请输入应用程序的密码。",
+    "password_skip_hint": "*您可以跳过设置密码。",
+    "skip": "跳过",
+    "confirm": "确认",
+    "login_with_kakao": "使用Kakao开始",
+    "login_with_apple": "使用Apple开始"
+  },
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "error": "错误",
+    "loading": "加载中..."
+  }
+}

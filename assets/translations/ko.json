@@ -1,0 +1,44 @@
+{
+  "app_name": "네의 일기",
+  "home": {
+    "work": "근무",
+    "night_work": "야근",
+    "wake_up": "기상",
+    "bed_time": "취침",
+    "department_work": "연구사설공중분해팀",
+    "department_night": "야근중인팀"
+  },
+  "diary": {
+    "title": "일기",
+    "write": "일기 쓰기",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "수정"
+  },
+  "my": {
+    "title": "마이",
+    "logout": "로그아웃",
+    "logout_confirm": "로그아웃 하시겠습니까?\n로컬 데이터로 전환됩니다.",
+    "logout_success": "로그아웃 되었습니다"
+  },
+  "auth": {
+    "welcome": "앗! 네의 일기에\n가입해주셔서 감사해요.",
+    "nickname_prompt": "앗! 네의 일기에서 사용하실 닉네임을 알려주세요",
+    "nickname_hint": "닉네임",
+    "nickname_random_hint": "*닉네임 정하기 어렵다면 주사위로 정해보세요.",
+    "nickname_use": "이 닉네임 사용하기",
+    "password_prompt": "앗! 네의 일기를 다른 사람들이 보는 건 곤란하죠.\n앱에 사용할 비밀번호를 입력해주세요.",
+    "password_skip_hint": "*비밀번호는 설정하지 않아도 괜찮아요.",
+    "skip": "건너뛰기",
+    "confirm": "확인",
+    "login_with_kakao": "카카오로 시작하기",
+    "login_with_apple": "Apple로 시작하기"
+  },
+  "common": {
+    "ok": "확인",
+    "cancel": "취소",
+    "error": "오류",
+    "loading": "로딩중..."
+  }
+}

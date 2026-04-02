@@ -1,0 +1,44 @@
+{
+  "app_name": "Yes Diary",
+  "home": {
+    "work": "Work",
+    "night_work": "Overtime",
+    "wake_up": "Wake Up",
+    "bed_time": "Sleep",
+    "department_work": "Research Team",
+    "department_night": "Overtime Team"
+  },
+  "diary": {
+    "title": "Diary",
+    "write": "Write Diary",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "my": {
+    "title": "My",
+    "logout": "Logout",
+    "logout_confirm": "Do you want to logout?\nYou will switch to local data.",
+    "logout_success": "Logged out successfully"
+  },
+  "auth": {
+    "welcome": "Thank you for\njoining Yes Diary!",
+    "nickname_prompt": "Please tell us your nickname for Yes Diary",
+    "nickname_hint": "Nickname",
+    "nickname_random_hint": "*If it's hard to decide, try the dice!",
+    "nickname_use": "Use this nickname",
+    "password_prompt": "We don't want others to see your diary.\nPlease enter a password for the app.",
+    "password_skip_hint": "*You can skip setting a password.",
+    "skip": "Skip",
+    "confirm": "Confirm",
+    "login_with_kakao": "Start with Kakao",
+    "login_with_apple": "Start with Apple"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "error": "Error",
+    "loading": "Loading..."
+  }
+}

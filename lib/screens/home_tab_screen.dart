@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math';
 import 'dart:async';
 
@@ -265,10 +266,10 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildTimeStateButton('근무', TimeState.workTime),
-                        _buildTimeStateButton('야근', TimeState.nightWorkTime),
-                        _buildTimeStateButton('기상', TimeState.wakeUpTime),
-                        _buildTimeStateButton('취침', TimeState.bedTime),
+                        _buildTimeStateButton('home.work'.tr(), TimeState.workTime),
+                        _buildTimeStateButton('home.night_work'.tr(), TimeState.nightWorkTime),
+                        _buildTimeStateButton('home.wake_up'.tr(), TimeState.wakeUpTime),
+                        _buildTimeStateButton('home.bed_time'.tr(), TimeState.bedTime),
                       ],
                     ),
                   ),
@@ -284,10 +285,10 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildTimeStateButton('근무', TimeState.workTime),
-                    _buildTimeStateButton('야근', TimeState.nightWorkTime),
-                    _buildTimeStateButton('기상', TimeState.wakeUpTime),
-                    _buildTimeStateButton('취침', TimeState.bedTime),
+                    _buildTimeStateButton('home.work'.tr(), TimeState.workTime),
+                    _buildTimeStateButton('home.night_work'.tr(), TimeState.nightWorkTime),
+                    _buildTimeStateButton('home.wake_up'.tr(), TimeState.wakeUpTime),
+                    _buildTimeStateButton('home.bed_time'.tr(), TimeState.bedTime),
                   ],
                 ),
               ),

@@ -60,6 +60,7 @@ dependencies:
   kakao_flutter_sdk_user: ^1.9.6  # 카카오 로그인
   flutter_dotenv: ^5.1.0  # 환경변수 관리
   lottie: ^3.1.0  # Lottie 애니메이션
+  easy_localization: ^3.0.8
 
 dev_dependencies:
   flutter_test:
@@ -95,6 +96,7 @@ flutter:
     - assets/emotion/
     - assets/button/
     - assets/home/
+    - assets/translations/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
