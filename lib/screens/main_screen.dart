@@ -44,28 +44,28 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 0
-                      ? SvgPicture.asset('assets/icon/menu_marker_active.svg', width: 24, height: 24)
-                      : SvgPicture.asset('assets/icon/menu_marker_inactive.svg', width: 24, height: 24),
+                      ? SvgPicture.asset('assets/icon/menu_marker_active.svg', width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_marker_inactive.svg', width: 36, height: 36),
                 ),
                 label: '회사',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 1
-                      ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 24, height: 24)
-                      : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 24, height: 24),
+                      ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 36, height: 36),
                 ),
                 label: '일기',
               ),
               BottomNavigationBarItem(
                 icon: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 2
-                      ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 24, height: 24)
-                      : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 24, height: 24),
+                      ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 36, height: 36),
                 ),
                 label: '마이',
               ),
@@ -78,8 +78,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             type: BottomNavigationBarType.fixed,
             showSelectedLabels: true,
             showUnselectedLabels: true,
-            selectedLabelStyle: const TextStyle(fontSize: 10.0, height: 1.0),
-            unselectedLabelStyle: const TextStyle(fontSize: 10.0, height: 1.0),
+            selectedLabelStyle: const TextStyle(fontSize: 14.0, height: 1.0),
+            unselectedLabelStyle: const TextStyle(fontSize: 14.0, height: 1.0),
             iconSize: 24,
           ),
         ),
