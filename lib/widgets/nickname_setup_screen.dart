@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:easy_localization/easy_localization.dart';
 import 'pin_setup_screen.dart';
 
 class NicknameSetupScreen extends StatefulWidget {
@@ -53,12 +54,12 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
     final nickname = _nicknameController.text.trim();
 
     if (nickname.isEmpty) {
-      _showErrorDialog('닉네임을 입력해주세요.');
+      _showErrorDialog('auth.error_nickname_required'.tr());
       return;
     }
 
     if (nickname.length < 2 || nickname.length > 10) {
-      _showErrorDialog('닉네임은 2~10자로 입력해주세요.');
+      _showErrorDialog('auth.error_nickname_length'.tr());
       return;
     }
 
@@ -84,9 +85,9 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            '오류',
-            style: TextStyle(
+          title: Text(
+            'common.error'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -104,9 +105,9 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                '확인',
-                style: TextStyle(
+              child: Text(
+                'common.ok'.tr(),
+                style: const TextStyle(
                   color: Color(0xFFFEE500),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -150,7 +151,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
 
               // 환영 메시지
               Text(
-                '앗! 네의 일기에\n가입해주셔서 감사해요.',
+                'auth.welcome'.tr(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.062,
@@ -162,7 +163,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
               SizedBox(height: screenHeight * 0.058),
 
               Text(
-                '앗! 네의 일기에서 사용하실 닉네임을 알려주세요',
+                'auth.nickname_prompt'.tr(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.041,
@@ -190,7 +191,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                     fontSize: screenWidth * 0.041,
                   ),
                   decoration: InputDecoration(
-                    hintText: '닉네임',
+                    hintText: 'auth.nickname_hint'.tr(),
                     hintStyle: const TextStyle(
                       color: Colors.white38,
                     ),
@@ -223,7 +224,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
 
               // 유효성 메시지
               Text(
-                '*닉네임 정하기 어렵다면 주사위로 정해보세요.',
+                'auth.nickname_random_hint'.tr(),
                 style: TextStyle(
                   color: const Color(0xFFFF9E9E),
                   fontSize: screenWidth * 0.031,
@@ -247,7 +248,7 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
                     ),
                   ),
                   child: Text(
-                    '이 닉네임 사용하기',
+                    'auth.nickname_use'.tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: screenWidth * 0.041,

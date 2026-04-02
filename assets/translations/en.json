@@ -20,7 +20,8 @@
     "title": "My",
     "logout": "Logout",
     "logout_confirm": "Do you want to logout?\nYou will switch to local data.",
-    "logout_success": "Logged out successfully"
+    "logout_success": "Logged out successfully",
+    "login_info": "Login to save your\ndiaries permanently!"
   },
   "auth": {
     "welcome": "Thank you for\njoining Yes Diary!",
@@ -33,7 +34,12 @@
     "skip": "Skip",
     "confirm": "Confirm",
     "login_with_kakao": "Start with Kakao",
-    "login_with_apple": "Start with Apple"
+    "login_with_apple": "Start with Apple",
+    "error_nickname_required": "Please enter a nickname.",
+    "error_nickname_length": "Nickname must be 2-10 characters.",
+    "error_password_required": "Please set a password.",
+    "error_password_numeric": "Password must be numeric only.",
+    "error_signup_failed": "Signup failed."
   },
   "common": {
     "ok": "OK",

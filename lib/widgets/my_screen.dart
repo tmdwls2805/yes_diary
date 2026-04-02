@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 import 'dart:async';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
@@ -208,17 +209,17 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            '로그아웃',
-            style: TextStyle(
+          title: Text(
+            'my.logout'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
-          content: const Text(
-            '로그아웃 하시겠습니까?\n로컬 데이터로 전환됩니다.',
-            style: TextStyle(
+          content: Text(
+            'my.logout_confirm'.tr(),
+            style: const TextStyle(
               color: Colors.white70,
               fontSize: 16,
             ),
@@ -226,9 +227,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                '취소',
-                style: TextStyle(
+              child: Text(
+                'common.cancel'.tr(),
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
                 ),
@@ -236,9 +237,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                '로그아웃',
-                style: TextStyle(
+              child: Text(
+                'my.logout'.tr(),
+                style: const TextStyle(
                   color: Color(0xFFFF4646),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -274,10 +275,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('로그아웃 되었습니다'),
-            backgroundColor: Color(0xFF2A2A2A),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('my.logout_success'.tr()),
+            backgroundColor: const Color(0xFF2A2A2A),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -328,9 +329,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 Navigator.of(context).pop();
                 // TODO: 기존 사용자면 메인 화면으로, 신규 사용자면 닉네임 설정 화면으로 이동
               },
-              child: const Text(
-                '확인',
-                style: TextStyle(
+              child: Text(
+                'common.ok'.tr(),
+                style: const TextStyle(
                   color: Color(0xFFFEE500),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -353,9 +354,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            '오류',
-            style: TextStyle(
+          title: Text(
+            'common.error'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -373,9 +374,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                '확인',
-                style: TextStyle(
+              child: Text(
+                'common.ok'.tr(),
+                style: const TextStyle(
                   color: Color(0xFFFEE500),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -419,10 +420,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 children: [
                   // 첫 번째 페이지일 때만 보이는 안내 텍스트
                   if (_currentPage == 0) ...[
-                    const Text(
-                      '로그인하면 일기를\n영구 저장할 수 있어요!',
+                    Text(
+                      'my.login_info'.tr(),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -499,9 +500,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                       ),
                                     )
-                                  : const Text(
-                                      '로그아웃',
-                                      style: TextStyle(
+                                  : Text(
+                                      'my.logout'.tr(),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
@@ -543,9 +544,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                           height: 24,
                                         ),
                                         const SizedBox(width: 12),
-                                        const Text(
-                                          '카카오로 시작하기',
-                                          style: TextStyle(
+                                        Text(
+                                          'auth.login_with_kakao'.tr(),
+                                          style: const TextStyle(
                                             color: Colors.black87,
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
@@ -594,9 +595,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                               height: 24,
                             ),
                             const SizedBox(width: 12),
-                            const Text(
-                              'Apple로 시작하기',
-                              style: TextStyle(
+                            Text(
+                              'auth.login_with_apple'.tr(),
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

@@ -20,7 +20,8 @@
     "title": "我的",
     "logout": "退出登录",
     "logout_confirm": "确定要退出登录吗？\n将切换到本地数据。",
-    "logout_success": "已退出登录"
+    "logout_success": "已退出登录",
+    "login_info": "登录后可以\n永久保存日记！"
   },
   "auth": {
     "welcome": "感谢您加入\n是的日记！",
@@ -33,7 +34,12 @@
     "skip": "跳过",
     "confirm": "确认",
     "login_with_kakao": "使用Kakao开始",
-    "login_with_apple": "使用Apple开始"
+    "login_with_apple": "使用Apple开始",
+    "error_nickname_required": "请输入昵称。",
+    "error_nickname_length": "昵称必须为2-10个字符。",
+    "error_password_required": "请设置密码。",
+    "error_password_numeric": "密码只能输入数字。",
+    "error_signup_failed": "注册失败。"
   },
   "common": {
     "ok": "确定",

@@ -20,7 +20,8 @@
     "title": "마이",
     "logout": "로그아웃",
     "logout_confirm": "로그아웃 하시겠습니까?\n로컬 데이터로 전환됩니다.",
-    "logout_success": "로그아웃 되었습니다"
+    "logout_success": "로그아웃 되었습니다",
+    "login_info": "로그인하면 일기를\n영구 저장할 수 있어요!"
   },
   "auth": {
     "welcome": "앗! 네의 일기에\n가입해주셔서 감사해요.",
@@ -33,7 +34,12 @@
     "skip": "건너뛰기",
     "confirm": "확인",
     "login_with_kakao": "카카오로 시작하기",
-    "login_with_apple": "Apple로 시작하기"
+    "login_with_apple": "Apple로 시작하기",
+    "error_nickname_required": "닉네임을 입력해주세요.",
+    "error_nickname_length": "닉네임은 2~10자로 입력해주세요.",
+    "error_password_required": "비밀번호를 설정해주세요.",
+    "error_password_numeric": "비밀번호는 숫자만 입력 가능합니다.",
+    "error_signup_failed": "회원가입에 실패했습니다."
   },
   "common": {
     "ok": "확인",

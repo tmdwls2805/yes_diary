@@ -20,7 +20,8 @@
     "title": "マイ",
     "logout": "ログアウト",
     "logout_confirm": "ログアウトしますか?\nローカルデータに切り替わります。",
-    "logout_success": "ログアウトしました"
+    "logout_success": "ログアウトしました",
+    "login_info": "ログインすると日記を\n永久保存できます！"
   },
   "auth": {
     "welcome": "イエス日記に\nご登録ありがとうございます！",
@@ -33,7 +34,12 @@
     "skip": "スキップ",
     "confirm": "確認",
     "login_with_kakao": "カカオでスタート",
-    "login_with_apple": "Appleでスタート"
+    "login_with_apple": "Appleでスタート",
+    "error_nickname_required": "ニックネームを入力してください。",
+    "error_nickname_length": "ニックネームは2〜10文字で入力してください。",
+    "error_password_required": "パスワードを設定してください。",
+    "error_password_numeric": "パスワードは数字のみ入力可能です。",
+    "error_signup_failed": "登録に失敗しました。"
   },
   "common": {
     "ok": "確認",

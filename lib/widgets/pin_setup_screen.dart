@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'thank_you_screen.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
@@ -42,12 +43,12 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     final pin = _pinControllers.map((c) => c.text).join();
 
     if (pin.length != 4) {
-      _showErrorDialog('비밀번호를 설정해주세요.');
+      _showErrorDialog('auth.error_password_required'.tr());
       return;
     }
 
     if (!RegExp(r'^[0-9]+$').hasMatch(pin)) {
-      _showErrorDialog('비밀번호는 숫자만 입력 가능합니다.');
+      _showErrorDialog('auth.error_password_numeric'.tr());
       return;
     }
 
@@ -117,7 +118,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     } catch (e) {
       print('회원가입 실패: $e');
       if (mounted) {
-        _showErrorDialog('회원가입에 실패했습니다.\n$e');
+        _showErrorDialog('${'auth.error_signup_failed'.tr()}\n$e');
       }
     } finally {
       if (mounted) {
@@ -193,7 +194,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     } catch (e) {
       print('회원가입 실패: $e');
       if (mounted) {
-        _showErrorDialog('회원가입에 실패했습니다.\n$e');
+        _showErrorDialog('${'auth.error_signup_failed'.tr()}\n$e');
       }
     } finally {
       if (mounted) {
@@ -213,9 +214,9 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            '오류',
-            style: TextStyle(
+          title: Text(
+            'common.error'.tr(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -233,9 +234,9 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                '확인',
-                style: TextStyle(
+              child: Text(
+                'common.ok'.tr(),
+                style: const TextStyle(
                   color: Color(0xFFFEE500),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -279,7 +280,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
 
               // 환영 메시지
               Text(
-                '앗! 네의 일기에\n가입해주셔서 감사해요.',
+                'auth.welcome'.tr(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.062,
@@ -292,7 +293,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
 
               // 비밀번호 설정 안내
               Text(
-                '앗! 네의 일기를 다른 사람들이 보는 건 곤란하죠.\n앱에 사용할 비밀번호를 입력해주세요.',
+                'auth.password_prompt'.tr(),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.041,
@@ -350,7 +351,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
 
               // 유효성 메시지
               Text(
-                '*비밀번호는 설정하지 않아도 괜찮아요.',
+                'auth.password_skip_hint'.tr(),
                 style: TextStyle(
                   color: const Color(0xFFFF9E9E),
                   fontSize: screenWidth * 0.031,
@@ -376,7 +377,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                           ),
                         ),
                         child: Text(
-                          '건너뛰기',
+                          'auth.skip'.tr(),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.041,
@@ -410,7 +411,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                                 ),
                               )
                             : Text(
-                                '확인',
+                                'auth.confirm'.tr(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: screenWidth * 0.041,
