@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/services/database_service.dart';
-import 'package:yes_diary/widgets/app_wrapper.dart';
+import 'package:yes_diary/screens/splash_screen.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -31,13 +31,13 @@ void main() async {
   runApp(
     EasyLocalization(
       supportedLocales: const [
-        Locale('ko', 'KR'), // 한국어
-        Locale('en', 'US'), // 영어
-        Locale('ja', 'JP'), // 일본어
-        Locale('zh', 'CN'), // 중국어
+        Locale('ko'), // 한국어
+        Locale('en'), // 영어
+        Locale('ja'), // 일본어
+        Locale('zh'), // 중국어
       ],
       path: 'assets/translations', // 번역 파일 경로
-      fallbackLocale: const Locale('ko', 'KR'), // 기본 언어
+      fallbackLocale: const Locale('ko'), // 기본 언어
       child: const ProviderScope(child: MyApp()),
     ),
   );
@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const AppWrapper(),
+      home: SplashScreen(),
     );
   }
 }

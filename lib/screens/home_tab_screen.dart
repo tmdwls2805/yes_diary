@@ -207,6 +207,36 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
       body: SafeArea(
         child: Stack(
           children: [
+            // 언어 선택 버튼 (오른쪽 상단)
+            Positioned(
+              top: 12,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => _showLanguagePicker(context),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3A3A3A),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _getCurrentLanguageLabel(context),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.language, color: Colors.white, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             // 메인 컨텐츠
             Column(
               children: [
@@ -303,6 +333,79 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> with TickerProvid
           ],
         ),
       ),
+    );
+  }
+
+  String _getCurrentLanguageLabel(BuildContext context) {
+    final locale = context.locale;
+    switch (locale.languageCode) {
+      case 'ko':
+        return '한국어';
+      case 'en':
+        return 'English';
+      case 'ja':
+        return '日本語';
+      case 'zh':
+        return '中文';
+      default:
+        return '한국어';
+    }
+  }
+
+  void _showLanguagePicker(BuildContext context) {
+    final languages = [
+      {'locale': const Locale('ko'), 'label': '한국어'},
+      {'locale': const Locale('en'), 'label': 'English'},
+      {'locale': const Locale('ja'), 'label': '日本語'},
+      {'locale': const Locale('zh'), 'label': '中文'},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF2A2A2A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              const Text(
+                '언어 선택',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...languages.map((lang) {
+                final isSelected = context.locale == lang['locale'];
+                return ListTile(
+                  title: Text(
+                    lang['label'] as String,
+                    style: TextStyle(
+                      color: isSelected ? Colors.red : Colors.white,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 16,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check, color: Colors.red)
+                      : null,
+                  onTap: () {
+                    context.setLocale(lang['locale'] as Locale);
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
