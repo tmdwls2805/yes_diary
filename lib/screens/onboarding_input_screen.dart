@@ -25,12 +25,22 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
   late final ScrollController _scrollController;
   bool _inputEnabled = false;
   bool _showTimePicker = false;
+  bool _showEmotionPicker = false;
+  bool _showWriteDiary = false;
   int _step = 0;
   int _userBubbleSeq = 0;
   int _selectedTimeTab = 0;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 18, minute: 0);
   String _nickname = '';
+
+  static const List<_Emotion> _emotionChips = [
+    _Emotion('화🔥', 'assets/emotion/red.svg', 'red'),
+    _Emotion('기쁨🍀', 'assets/emotion/yellow.svg', 'yellow'),
+    _Emotion('당황😰', 'assets/emotion/blue.svg', 'blue'),
+    _Emotion('슬픔😢', 'assets/emotion/pink.svg', 'pink'),
+    _Emotion('허탈☠️', 'assets/emotion/green.svg', 'green'),
+  ];
   final List<_TimelineItem> _timeline = [];
 
   static const List<String> _placeholders = [
@@ -81,6 +91,8 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
     List<_FollowUp> messages, {
     bool reEnableInput = false,
     bool showTimePicker = false,
+    bool showEmotionPicker = false,
+    bool showWriteDiary = false,
   }) async {
     for (final item in messages) {
       if (!mounted) return;
@@ -100,8 +112,29 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
     setState(() {
       if (reEnableInput) _inputEnabled = true;
       if (showTimePicker) _showTimePicker = true;
+      if (showEmotionPicker) _showEmotionPicker = true;
+      if (showWriteDiary) _showWriteDiary = true;
     });
-    if (showTimePicker) _scrollToBottom();
+    if (showTimePicker || showEmotionPicker || showWriteDiary) {
+      _scrollToBottom();
+    }
+  }
+
+  Future<void> _selectEmotion(_Emotion emotion) async {
+    setState(() {
+      _timeline.add(_TimelineItem.user(emotion.label, _userBubbleSeq++));
+      _showEmotionPicker = false;
+    });
+    _scrollToBottom();
+    await Future.delayed(const Duration(milliseconds: 600));
+    if (!mounted) return;
+    final greeting = emotion.key == 'green' ? '안녕하세요!' : '또 만나네요!';
+    _runFollowUp([
+      _FollowUp(greeting, emotion.iconAsset),
+      _FollowUp('제가 $_nickname 님의 감정요정이에요!'),
+      const _FollowUp('저희 함께 힘든 회사생활'),
+      const _FollowUp('잘 헤쳐나가봐요🔥'),
+    ], showWriteDiary: true);
   }
 
   String _fmt(TimeOfDay t) =>
@@ -123,7 +156,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
       const _FollowUp('마지막 질문 타임!'),
       const _FollowUp('회사에서 주로 느끼는 감정은'),
       const _FollowUp('무엇인가요?'),
-    ]);
+    ], showEmotionPicker: true);
   }
 
   Future<void> _submit() async {
@@ -251,6 +284,88 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
                                   child: _Bubble(text: _timeline[ti].text),
                                 ),
                         ),
+                    ],
+                    if (_showEmotionPicker) ...[
+                      const SizedBox(height: 46),
+                      const Center(
+                        child: Text(
+                          '선택해주세요!',
+                          style: TextStyle(
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w300,
+                            fontSize: 16,
+                            color: Color(0xFFFFFFFF),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            for (final e in _emotionChips.take(3))
+                              _EmotionChip(
+                                label: e.label,
+                                onTap: () => _selectEmotion(e),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            for (final e in _emotionChips.skip(3))
+                              _EmotionChip(
+                                label: e.label,
+                                onTap: () => _selectEmotion(e),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 56),
+                    ],
+                    if (_showWriteDiary) ...[
+                      const SizedBox(height: 36),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () {},
+                          child: Container(
+                            width: 264,
+                            height: 56,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF4646),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '일기 작성하기',
+                                  style: TextStyle(
+                                    fontFamily: 'Pretendard',
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color(0xFFFFFFFF),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                SvgPicture.asset(
+                                  'assets/icon/write_diary.svg',
+                                  width: 24,
+                                  height: 24,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -621,6 +736,44 @@ class _FollowUp {
   final String text;
   final String? iconAsset;
   const _FollowUp(this.text, [this.iconAsset]);
+}
+
+class _Emotion {
+  final String label;
+  final String iconAsset;
+  final String key;
+  const _Emotion(this.label, this.iconAsset, this.key);
+}
+
+class _EmotionChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _EmotionChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF4646),
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Pretendard',
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _WheelTimePicker extends StatefulWidget {
