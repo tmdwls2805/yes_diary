@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/widgets/my_screen.dart';
 
 class OnboardingInputScreen extends StatefulWidget {
   const OnboardingInputScreen({super.key});
@@ -33,6 +35,8 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 18, minute: 0);
   String _nickname = '';
+  String _department = '';
+  _Emotion? _selectedEmotion;
 
   static const List<_Emotion> _emotionChips = [
     _Emotion('화🔥', 'assets/emotion/red.svg', 'red'),
@@ -122,6 +126,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
 
   Future<void> _selectEmotion(_Emotion emotion) async {
     setState(() {
+      _selectedEmotion = emotion;
       _timeline.add(_TimelineItem.user(emotion.label, _userBubbleSeq++));
       _showEmotionPicker = false;
     });
@@ -181,6 +186,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
         const _FollowUp('근무하고 계신가요?'),
       ], reEnableInput: true);
     } else if (currentStep == 1) {
+      _department = text;
       _runFollowUp([
         _FollowUp('그럼, $text로 세팅할게요!', 'assets/emotion/blue.svg'),
         const _FollowUp('출/퇴근 시간도 알려주시면'),
@@ -334,7 +340,23 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
                       const SizedBox(height: 36),
                       Center(
                         child: GestureDetector(
-                          onTap: () {},
+                          onTap: () async {
+                            await SecureStorageService()
+                                .saveOnboardingProfile(
+                              nickname: _nickname,
+                              department: _department,
+                              startTime: _fmt(_startTime),
+                              endTime: _fmt(_endTime),
+                              emotion: _selectedEmotion?.key ?? '',
+                            );
+                            if (!context.mounted) return;
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MyScreen(showSkipLogin: true),
+                              ),
+                            );
+                          },
                           child: Container(
                             width: 264,
                             height: 56,

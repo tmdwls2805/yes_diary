@@ -9,10 +9,13 @@ import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
 import '../providers/diary_provider.dart';
+import '../screens/main_screen.dart';
+import 'confirm_dialog.dart';
 import 'nickname_setup_screen.dart';
 
 class MyScreen extends ConsumerStatefulWidget {
-  const MyScreen({super.key});
+  final bool showSkipLogin;
+  const MyScreen({super.key, this.showSkipLogin = false});
 
   @override
   ConsumerState<MyScreen> createState() => _MyScreenState();
@@ -609,6 +612,55 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                     ),
                   ),
 
+                  if (widget.showSkipLogin) ...[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: GestureDetector(
+                        onTap: () async {
+                          final ok = await showCustomConfirmDialog(
+                            context: context,
+                            svgAsset: 'assets/emotion/pink.svg',
+                            title: '로그인 없이 일기쓰기',
+                            content:
+                                '로그인 없이 앱을 이용할 수 있으나, 특정 기능에 제한이 있을 수 있습니다.\n그래도 로그인 없이 진행하시겠습니까?',
+                          );
+                          if (ok == true && context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) => const MainScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: const IntrinsicWidth(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                '로그인 없이 일기쓰기',
+                                style: TextStyle(
+                                  fontFamily: 'Pretendard',
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                  color: Color(0xFFFF9E9E),
+                                ),
+                              ),
+                              SizedBox(height: 1),
+                              Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: Color(0xFFFF9E9E),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 40),
                 ],
               ),
@@ -621,7 +673,9 @@ class _MyScreenState extends ConsumerState<MyScreen> {
 
   Widget _buildFirstContent() {
     return Align(
-      alignment: const Alignment(0, 0.70), // 위로 올려서 글씨와 가깝게
+      alignment: widget.showSkipLogin
+          ? Alignment.center
+          : const Alignment(0, 0.70), // 위로 올려서 글씨와 가깝게
       child: SizedBox(
         width: 400,
         height: 400,

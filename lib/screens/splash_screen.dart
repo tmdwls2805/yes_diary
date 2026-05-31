@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/screens/main_screen.dart';
 import 'package:yes_diary/screens/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -19,9 +21,15 @@ class _SplashScreenState extends State<SplashScreen> {
   _navigateNext() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
+    final profile = await SecureStorageService().getOnboardingProfile();
+    if (!mounted) return;
+    final hasProfile = (profile['nickname'] ?? '').isNotEmpty;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      MaterialPageRoute(
+        builder: (context) =>
+            hasProfile ? const MainScreen() : const OnboardingScreen(),
+      ),
     );
   }
 
