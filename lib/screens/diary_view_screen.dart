@@ -3,6 +3,7 @@ import 'package:yes_diary/widgets/confirm_dialog.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/services/ad_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_body_with_navigation.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
@@ -14,7 +15,8 @@ class DiaryViewScreen extends StatefulWidget {
   final DateTime selectedDate;
   final DateTime? createdAt;
 
-  const DiaryViewScreen({Key? key, required this.selectedDate, this.createdAt}) : super(key: key);
+  const DiaryViewScreen({Key? key, required this.selectedDate, this.createdAt})
+      : super(key: key);
 
   @override
   _DiaryViewScreenState createState() => _DiaryViewScreenState();
@@ -61,7 +63,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     }
 
     if (_currentUserId != null) {
-      _diaryEntry = await DatabaseService.instance.diaryRepository.getDiaryByDateAndUserId(
+      _diaryEntry = await DatabaseService.instance.diaryRepository
+          .getDiaryByDateAndUserId(
         _currentDate,
         _currentUserId!,
       );
@@ -124,6 +127,18 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     });
   }
 
+  Future<bool> _isLocalUser() async {
+    final localUserId = await SecureStorageService().getLocalUserId();
+    return localUserId != null && _currentUserId == localUserId;
+  }
+
+  Future<void> _showLocalUserDiaryAdIfNeeded() async {
+    if (!await _isLocalUser()) return;
+    Future<void>.microtask(
+      AdService.showDiarySavedInterstitialIfAvailable,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +162,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
       body: Stack(
         children: [
           _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Colors.white))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white))
               : _diaryEntry == null
                   ? GestureDetector(
                       onTap: () {
@@ -160,7 +176,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                         const double sensitivity = 300.0;
                         if (details.velocity.pixelsPerSecond.dx > sensitivity) {
                           _handleSwipeRight();
-                        } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                        } else if (details.velocity.pixelsPerSecond.dx <
+                            -sensitivity) {
                           _handleSwipeLeft();
                         }
                       },
@@ -172,16 +189,24 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             DiaryBodyWithNavigation(
-                              hardcodedImagePath: 'assets/emotion/gray_body.svg',
-                              customText: '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
-                              onLeftSwipe: _canNavigateToPrevious() ? () {
-                                final previousDay = _currentDate.subtract(const Duration(days: 1));
-                                _navigateToDate(previousDay);
-                              } : null,
-                              onRightSwipe: _canNavigateToNext() ? () {
-                                final nextDay = _currentDate.add(const Duration(days: 1));
-                                _navigateToDate(nextDay);
-                              } : null,
+                              hardcodedImagePath:
+                                  'assets/emotion/gray_body.svg',
+                              customText:
+                                  '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
+                              onLeftSwipe: _canNavigateToPrevious()
+                                  ? () {
+                                      final previousDay = _currentDate
+                                          .subtract(const Duration(days: 1));
+                                      _navigateToDate(previousDay);
+                                    }
+                                  : null,
+                              onRightSwipe: _canNavigateToNext()
+                                  ? () {
+                                      final nextDay = _currentDate
+                                          .add(const Duration(days: 1));
+                                      _navigateToDate(nextDay);
+                                    }
+                                  : null,
                               imageWidth: 92,
                               imageHeight: 142,
                             ),
@@ -198,14 +223,17 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => DiaryWriteScreen(selectedDate: _currentDate),
+                                        builder: (context) => DiaryWriteScreen(
+                                            selectedDate: _currentDate),
                                       ),
-                                    ).then((result) async { // [수정] 반환 값을 받도록 변경
+                                    ).then((result) async {
+                                      // [수정] 반환 값을 받도록 변경
                                       // 글쓰기 화면에서 돌아오면 항상 데이터를 새로고침
-                                      await _loadDiaryEntry(); 
+                                      await _loadDiaryEntry();
                                       // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
                                       if (result == true && mounted) {
                                         showSaveConfirmDialog(context);
+                                        await _showLocalUserDiaryAdIfNeeded();
                                       }
                                     });
                                   },
@@ -254,7 +282,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                         const double sensitivity = 300.0;
                         if (details.velocity.pixelsPerSecond.dx > sensitivity) {
                           _handleSwipeRight();
-                        } else if (details.velocity.pixelsPerSecond.dx < -sensitivity) {
+                        } else if (details.velocity.pixelsPerSecond.dx <
+                            -sensitivity) {
                           _handleSwipeLeft();
                         }
                       },
@@ -267,21 +296,28 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                           children: [
                             DiaryBodyWithNavigation(
                               emotion: _diaryEntry!.emotionName,
-                              onLeftSwipe: _canNavigateToPrevious() ? () {
-                                final previousDay = _currentDate.subtract(const Duration(days: 1));
-                                _navigateToDate(previousDay);
-                              } : null,
-                              onRightSwipe: _canNavigateToNext() ? () {
-                                final nextDay = _currentDate.add(const Duration(days: 1));
-                                _navigateToDate(nextDay);
-                              } : null,
+                              onLeftSwipe: _canNavigateToPrevious()
+                                  ? () {
+                                      final previousDay = _currentDate
+                                          .subtract(const Duration(days: 1));
+                                      _navigateToDate(previousDay);
+                                    }
+                                  : null,
+                              onRightSwipe: _canNavigateToNext()
+                                  ? () {
+                                      final nextDay = _currentDate
+                                          .add(const Duration(days: 1));
+                                      _navigateToDate(nextDay);
+                                    }
+                                  : null,
                               imageWidth: 92,
                               imageHeight: 142,
                             ),
                             const SizedBox(height: 40.0),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0),
                                 child: DiaryContentField(
                                   controller: _contentController,
                                   isReadOnly: true,
@@ -319,24 +355,28 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                 existingEntry: _diaryEntry,
                               ),
                             ),
-                          ).then((result) async { // [수정] 반환 값을 받도록 변경
+                          ).then((result) async {
+                            // [수정] 반환 값을 받도록 변경
                             // 수정 화면에서 돌아오면 항상 데이터를 새로고침
                             await _loadDiaryEntry();
                             // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
                             if (result == true && mounted) {
                               showSaveConfirmDialog(context);
+                              await _showLocalUserDiaryAdIfNeeded();
                             }
                           });
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
                           child: Row(
                             children: [
                               SvgPicture.asset(
                                 'assets/icon/write_diary.svg',
                                 width: 24,
                                 height: 24,
-                                colorFilter: const ColorFilter.mode(Colors.black87, BlendMode.srcIn),
+                                colorFilter: const ColorFilter.mode(
+                                    Colors.black87, BlendMode.srcIn),
                               ),
                               const SizedBox(width: 8.0),
                               const Text(
@@ -361,29 +401,40 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                       ),
                       InkWell(
                         onTap: () async {
-                          _toggleDropdown(); 
+                          _toggleDropdown();
 
                           if (_diaryEntry != null && _currentUserId != null) {
-                            final bool? confirmed = await showDeleteConfirmDialog(context);
+                            final bool? confirmed =
+                                await showDeleteConfirmDialog(context);
 
                             if (confirmed == true && mounted) {
+                              final shouldShowAd = await _isLocalUser();
                               await DatabaseService.instance.diaryRepository
                                   .deleteDiaryByDateAndUserId(
                                       _currentDate, _currentUserId!);
-                              
+
                               await _loadDiaryEntry();
+
+                              if (shouldShowAd) {
+                                Future<void>.microtask(
+                                  AdService
+                                      .showDiarySavedInterstitialIfAvailable,
+                                );
+                              }
                             }
                           }
                         },
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0, vertical: 12.0),
                           child: Row(
                             children: [
                               SvgPicture.asset(
                                 'assets/icon/trash.svg',
                                 width: 24,
                                 height: 24,
-                                colorFilter: const ColorFilter.mode(Colors.redAccent, BlendMode.srcIn),
+                                colorFilter: const ColorFilter.mode(
+                                    Colors.redAccent, BlendMode.srcIn),
                               ),
                               const SizedBox(width: 8.0),
                               const Text(

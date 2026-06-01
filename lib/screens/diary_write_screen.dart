@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/providers/diary_provider.dart';
 import 'package:yes_diary/providers/user_provider.dart';
 import 'package:yes_diary/services/ad_service.dart';
-import 'package:yes_diary/services/token_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_emotion_selector.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
@@ -97,14 +97,16 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
       await ref.read(diaryProvider.notifier).saveDiary(diaryEntry);
     }
 
-    final shouldShowAd =
-        widget.existingEntry == null && !await TokenService.isLoggedIn();
+    final localUserId = await SecureStorageService().getLocalUserId();
+    final shouldShowAd = userData.userId == localUserId;
 
     if (!mounted) return;
     Navigator.pop(context, true);
 
     if (shouldShowAd) {
-      AdService.showDiarySavedInterstitialIfAvailable();
+      Future<void>.microtask(
+        AdService.showDiarySavedInterstitialIfAvailable,
+      );
     }
   }
 
