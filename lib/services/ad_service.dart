@@ -20,28 +20,35 @@ class AdService {
 
     final completer = Completer<void>();
 
-    await InterstitialAd.load(
-      adUnitId: adUnitId,
-      request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) {
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
+    try {
+      await InterstitialAd.load(
+        adUnitId: adUnitId,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            ad.fullScreenContentCallback = FullScreenContentCallback(
+              onAdDismissedFullScreenContent: (ad) {
+                ad.dispose();
+                if (!completer.isCompleted) completer.complete();
+              },
+              onAdFailedToShowFullScreenContent: (ad, error) {
+                ad.dispose();
+                if (!completer.isCompleted) completer.complete();
+              },
+            );
+            ad.show().catchError((_) {
               ad.dispose();
               if (!completer.isCompleted) completer.complete();
-            },
-            onAdFailedToShowFullScreenContent: (ad, error) {
-              ad.dispose();
-              if (!completer.isCompleted) completer.complete();
-            },
-          );
-          ad.show();
-        },
-        onAdFailedToLoad: (error) {
-          if (!completer.isCompleted) completer.complete();
-        },
-      ),
-    );
+            });
+          },
+          onAdFailedToLoad: (error) {
+            if (!completer.isCompleted) completer.complete();
+          },
+        ),
+      );
+    } catch (_) {
+      if (!completer.isCompleted) completer.complete();
+    }
 
     return completer.future.timeout(
       const Duration(seconds: 8),

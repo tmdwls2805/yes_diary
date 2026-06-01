@@ -99,12 +99,13 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
 
     final shouldShowAd =
         widget.existingEntry == null && !await TokenService.isLoggedIn();
-    if (shouldShowAd) {
-      await AdService.showDiarySavedInterstitialIfAvailable();
-    }
 
     if (!mounted) return;
     Navigator.pop(context, true);
+
+    if (shouldShowAd) {
+      AdService.showDiarySavedInterstitialIfAvailable();
+    }
   }
 
   @override
