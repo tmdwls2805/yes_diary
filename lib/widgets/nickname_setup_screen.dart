@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
+import '../core/services/storage/secure_storage_service.dart';
 import 'pin_setup_screen.dart';
 
 class NicknameSetupScreen extends StatefulWidget {
@@ -31,6 +32,20 @@ class _NicknameSetupScreenState extends State<NicknameSetupScreen> {
     '펭귄', '코알라', '판다', '여우', '사슴',
     '별', '구름', '달', '해', '꽃',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOnboardingNickname();
+  }
+
+  Future<void> _loadOnboardingNickname() async {
+    final profile = await SecureStorageService().getOnboardingProfile();
+    final nickname = profile['nickname'];
+    if (!mounted || nickname == null || nickname.isEmpty) return;
+
+    _nicknameController.text = nickname;
+  }
 
   @override
   void dispose() {

@@ -8,4 +8,5 @@ class StorageKeys {
   static const String onboardingStartTime = 'onboarding_start_time';
   static const String onboardingEndTime = 'onboarding_end_time';
   static const String onboardingEmotion = 'onboarding_emotion';
+  static const String homeBedTimeDate = 'home_bed_time_date';
 }

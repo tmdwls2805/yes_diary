@@ -6,14 +6,30 @@ import 'package:yes_diary/widgets/my_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+
+  const MainScreen({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+  static const List<Widget> _tabs = [
+    HomeTabScreen(),
+    DiaryTabScreen(),
+    MyScreen(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +62,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 icon: Padding(
                   padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 0
-                      ? SvgPicture.asset('assets/icon/menu_marker_active.svg', width: 36, height: 36)
-                      : SvgPicture.asset('assets/icon/menu_marker_inactive.svg', width: 36, height: 36),
+                      ? SvgPicture.asset('assets/icon/menu_marker_active.svg',
+                          width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_marker_inactive.svg',
+                          width: 36, height: 36),
                 ),
                 label: '회사',
               ),
@@ -55,8 +73,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 icon: Padding(
                   padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 1
-                      ? SvgPicture.asset('assets/icon/menu_diary_active.svg', width: 36, height: 36)
-                      : SvgPicture.asset('assets/icon/menu_diary_inactive.svg', width: 36, height: 36),
+                      ? SvgPicture.asset('assets/icon/menu_diary_active.svg',
+                          width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_diary_inactive.svg',
+                          width: 36, height: 36),
                 ),
                 label: '일기',
               ),
@@ -64,8 +84,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 icon: Padding(
                   padding: const EdgeInsets.only(top: 8.0, bottom: 5.0),
                   child: _selectedIndex == 2
-                      ? SvgPicture.asset('assets/icon/menu_my_active.svg', width: 36, height: 36)
-                      : SvgPicture.asset('assets/icon/menu_my_inactive.svg', width: 36, height: 36),
+                      ? SvgPicture.asset('assets/icon/menu_my_active.svg',
+                          width: 36, height: 36)
+                      : SvgPicture.asset('assets/icon/menu_my_inactive.svg',
+                          width: 36, height: 36),
                 ),
                 label: '마이',
               ),
@@ -88,16 +110,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Widget _buildBody() {
-    switch (_selectedIndex) {
-      case 0:
-        return const HomeTabScreen();
-      case 1:
-        return const DiaryTabScreen();
-      case 2:
-        return const MyScreen();
-      default:
-        return const HomeTabScreen();
-    }
+    return IndexedStack(
+      index: _selectedIndex,
+      children: _tabs,
+    );
   }
 
   void _onItemTapped(int index) {

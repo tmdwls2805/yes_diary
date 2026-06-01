@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
 import '../providers/diary_provider.dart';
+import 'app_wrapper.dart';
 
 class PinSetupScreen extends ConsumerStatefulWidget {
   final String nickname;
@@ -24,7 +25,8 @@ class PinSetupScreen extends ConsumerStatefulWidget {
 
 class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
   bool _isLoading = false;
-  final List<TextEditingController> _pinControllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _pinControllers =
+      List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _pinFocusNodes = List.generate(4, (_) => FocusNode());
   final AuthService _authService = AuthService();
 
@@ -86,53 +88,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         onboardingEmotion: onboardingProfile['emotion'],
       );
 
-      // 토큰 저장
-      final tokens = result;
-      final user = tokens['user'];
-
-      await TokenService.saveTokens(
-        accessToken: tokens['accessToken'],
-        refreshToken: tokens['refreshToken'],
-        userInfo: {
-          'id': user['id'],
-          'nickname': user['nickname'],
-          'provider': user['provider'],
-          if (user['createdAt'] != null) 'createdAt': user['createdAt'],
-          if (user['updatedAt'] != null) 'updatedAt': user['updatedAt'],
-        },
-      );
-
-      print('회원가입 완료: ${user['nickname']}');
-
-      // UserProvider 갱신
-      final userId = user['id'].toString();
-      await ref.read(userProvider.notifier).saveUserId(userId);
-      if (user['createdAt'] != null) {
-        await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
-      }
-
-      // 신규 가입은 로그인 전 로컬 일기를 서버 계정으로 먼저 동기화합니다.
-      if (localUserId != null) {
-        await ref.read(diaryProvider.notifier).syncLocalDiariesToServer(localUserId);
-      }
-
-      // 동기화 성공 후 로컬 캐시를 비우고 서버 데이터만 다시 저장합니다.
-      await ref.read(diaryProvider.notifier).clearLocalDiaries();
-
-      // 서버에서 현재 월의 일기 가져오기
-      final now = DateTime.now();
-      await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
-        now.year,
-        now.month,
-        userId,
-      );
-
-      if (mounted) {
-        // 감사 화면으로 이동
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ThankYouScreen()),
-        );
-      }
+      await _completeSignup(result, localUserId);
     } catch (e) {
       print('회원가입 실패: $e');
       if (mounted) {
@@ -180,52 +136,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         onboardingEmotion: onboardingProfile['emotion'],
       );
 
-      // 토큰 저장
-      final tokens = result;
-      final user = tokens['user'];
-
-      await TokenService.saveTokens(
-        accessToken: tokens['accessToken'],
-        refreshToken: tokens['refreshToken'],
-        userInfo: {
-          'id': user['id'],
-          'nickname': user['nickname'],
-          'provider': user['provider'],
-          if (user['createdAt'] != null) 'createdAt': user['createdAt'],
-          if (user['updatedAt'] != null) 'updatedAt': user['updatedAt'],
-        },
-      );
-
-      print('회원가입 완료: ${user['nickname']}');
-
-      // UserProvider 갱신
-      final userId = user['id'].toString();
-      await ref.read(userProvider.notifier).saveUserId(userId);
-      if (user['createdAt'] != null) {
-        await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
-      }
-
-      // 신규 가입은 로그인 전 로컬 일기를 서버 계정으로 먼저 동기화합니다.
-      if (localUserId != null) {
-        await ref.read(diaryProvider.notifier).syncLocalDiariesToServer(localUserId);
-      }
-
-      // 동기화 성공 후 로컬 캐시를 비우고 서버 데이터만 다시 저장합니다.
-      await ref.read(diaryProvider.notifier).clearLocalDiaries();
-
-      // 서버에서 현재 월의 일기 가져오기
-      final now = DateTime.now();
-      await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
-        now.year,
-        now.month,
-        userId,
-      );
-
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const ThankYouScreen()),
-        );
-      }
+      await _completeSignup(result, localUserId);
     } catch (e) {
       print('회원가입 실패: $e');
       if (mounted) {
@@ -238,6 +149,129 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         });
       }
     }
+  }
+
+  Future<void> _completeSignup(
+    Map<String, dynamic> tokens,
+    String? localUserId,
+  ) async {
+    final user = tokens['user'];
+
+    await TokenService.saveTokens(
+      accessToken: tokens['accessToken'],
+      refreshToken: tokens['refreshToken'],
+      userInfo: {
+        'id': user['id'],
+        'nickname': user['nickname'],
+        'provider': user['provider'],
+        if (user['createdAt'] != null) 'createdAt': user['createdAt'],
+        if (user['updatedAt'] != null) 'updatedAt': user['updatedAt'],
+        if (user['department'] != null) 'department': user['department'],
+        if (user['workStartTime'] != null)
+          'workStartTime': user['workStartTime'],
+        if (user['workEndTime'] != null) 'workEndTime': user['workEndTime'],
+        if (user['onboardingEmotion'] != null)
+          'onboardingEmotion': user['onboardingEmotion'],
+      },
+    );
+
+    print('회원가입 완료: ${user['nickname']}');
+
+    final userId = user['id'].toString();
+    await ref.read(userProvider.notifier).saveUserId(userId);
+    if (user['createdAt'] != null) {
+      await ref
+          .read(userProvider.notifier)
+          .saveCreatedAt(DateTime.parse(user['createdAt']));
+    }
+
+    var shouldSync = false;
+    if (localUserId != null) {
+      final hasLocalDiaries =
+          await ref.read(diaryProvider.notifier).hasLocalDiaries(localUserId);
+      if (hasLocalDiaries && mounted) {
+        shouldSync = await _showDiarySyncDialog();
+      }
+    }
+
+    if (shouldSync && localUserId != null) {
+      await ref
+          .read(diaryProvider.notifier)
+          .syncLocalDiariesToServer(localUserId);
+    }
+
+    await ref.read(diaryProvider.notifier).clearLocalDiaries();
+
+    final now = DateTime.now();
+    await ref.read(diaryProvider.notifier).fetchAndSaveMonthlyDiaries(
+          now.year,
+          now.month,
+          userId,
+        );
+
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => const AppWrapper(initialIndex: 1),
+      ),
+      (route) => false,
+    );
+  }
+
+  Future<bool> _showDiarySyncDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            '로컬 일기를 동기화할까요?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: const Text(
+            '이전에 로그인 없이 작성한 일기를 계정에 저장하시겠습니까?\n아니요를 선택하면 로컬 일기는 삭제됩니다.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+              height: 1.4,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                '아니요',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                '예',
+                style: TextStyle(
+                  color: Color(0xFFFF4646),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
   }
 
   void _showErrorDialog(String message) {
@@ -442,7 +476,8 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                                 height: screenWidth * 0.062,
                                 child: const CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
                             : Text(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../screens/diary_write_screen.dart';
-import '../screens/main_screen.dart';
+import 'app_wrapper.dart';
 
 class ThankYouScreen extends StatelessWidget {
   const ThankYouScreen({super.key});
@@ -50,7 +50,7 @@ class ThankYouScreen extends StatelessWidget {
                     // 모든 이전 화면을 제거하고 메인 화면으로 이동
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                        builder: (context) => const MainScreen(),
+                        builder: (context) => const AppWrapper(),
                       ),
                       (route) => false,
                     );

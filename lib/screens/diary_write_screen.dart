@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/providers/diary_provider.dart';
 import 'package:yes_diary/providers/user_provider.dart';
+import 'package:yes_diary/services/ad_service.dart';
+import 'package:yes_diary/services/token_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
 import 'package:yes_diary/widgets/diary_emotion_selector.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
@@ -12,7 +14,9 @@ class DiaryWriteScreen extends ConsumerStatefulWidget {
   final DateTime selectedDate;
   final DiaryEntry? existingEntry;
 
-  const DiaryWriteScreen({Key? key, required this.selectedDate, this.existingEntry}) : super(key: key);
+  const DiaryWriteScreen(
+      {Key? key, required this.selectedDate, this.existingEntry})
+      : super(key: key);
 
   @override
   ConsumerState<DiaryWriteScreen> createState() => _DiaryWriteScreenState();
@@ -63,7 +67,7 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
 
   Future<void> _saveDiary() async {
     final userData = ref.read(userProvider);
-    
+
     if (userData.userId == null) {
       print('User ID is null. Cannot save diary.');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,6 +97,13 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
       await ref.read(diaryProvider.notifier).saveDiary(diaryEntry);
     }
 
+    final shouldShowAd =
+        widget.existingEntry == null && !await TokenService.isLoggedIn();
+    if (shouldShowAd) {
+      await AdService.showDiarySavedInterstitialIfAvailable();
+    }
+
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -120,7 +131,7 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
           selectedDate: widget.selectedDate,
           leftButtonText: '취소',
           rightButtonText: '저장',
-          onLeftPressed: _handleCancel, 
+          onLeftPressed: _handleCancel,
           onRightPressed: _saveDiary,
         ),
         body: GestureDetector(

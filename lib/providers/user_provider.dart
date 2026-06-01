@@ -57,6 +57,26 @@ class UserNotifier extends StateNotifier<UserData> {
     state = state.copyWith(createdAt: createdAt);
   }
 
+  /// 비로그인 사용자가 로컬 DB를 사용할 수 있도록 로컬 UUID 세션을 보장합니다.
+  Future<String> ensureLocalUser() async {
+    String? localUserId = await _secureStorageService.getLocalUserId();
+
+    if (localUserId == null) {
+      const uuid = Uuid();
+      localUserId = uuid.v4();
+      await _secureStorageService.saveLocalUserId(localUserId);
+      print('새 로컬 UUID 생성 및 저장: $localUserId');
+    }
+
+    await saveUserId(localUserId);
+
+    if (state.createdAt == null) {
+      await saveCreatedAt(DateTime.now());
+    }
+
+    return localUserId;
+  }
+
   /// 로그아웃: 원래의 로컬 UUID로 복귀
   Future<String> logout() async {
     // 저장된 로컬 UUID 가져오기

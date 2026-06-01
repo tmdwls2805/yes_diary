@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
-import 'package:yes_diary/screens/main_screen.dart';
 import 'package:yes_diary/screens/onboarding_screen.dart';
 import 'package:yes_diary/services/token_service.dart';
+import 'package:yes_diary/widgets/app_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => isLoggedIn || isOnboardingCompleted
-            ? const MainScreen()
+            ? const AppWrapper()
             : const OnboardingScreen(),
       ),
     );

@@ -1,18 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/providers/user_provider.dart';
 import 'package:yes_diary/widgets/my_screen.dart';
 
-class OnboardingInputScreen extends StatefulWidget {
+class OnboardingInputScreen extends ConsumerStatefulWidget {
   const OnboardingInputScreen({super.key});
 
   @override
-  State<OnboardingInputScreen> createState() => _OnboardingInputScreenState();
+  ConsumerState<OnboardingInputScreen> createState() => _OnboardingInputScreenState();
 }
 
-class _OnboardingInputScreenState extends State<OnboardingInputScreen>
+class _OnboardingInputScreenState extends ConsumerState<OnboardingInputScreen>
     with TickerProviderStateMixin {
   static const List<String> _messages = [
     '안녕하세요!',
@@ -157,7 +159,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
     if (!mounted) return;
     _runFollowUp([
       const _FollowUp('이제, 저희와 함께 일해요!', 'assets/emotion/pink.svg'),
-      _FollowUp('$_nickname 님과 함꼐할 요정 선택을 위한'),
+      _FollowUp('$_nickname 님과 함께할 요정 선택을 위한'),
       const _FollowUp('마지막 질문 타임!'),
       const _FollowUp('회사에서 주로 느끼는 감정은'),
       const _FollowUp('무엇인가요?'),
@@ -347,12 +349,13 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
                                 .saveOnboardingProfile(
                               nickname: _nickname,
                               department: _department,
-                              startTime: _fmt(_startTime),
-                              endTime: _fmt(_endTime),
-                              emotion: _selectedEmotion?.key ?? '',
-                            );
-                            if (!context.mounted) return;
-                            Navigator.of(context).push(
+	                              startTime: _fmt(_startTime),
+	                              endTime: _fmt(_endTime),
+	                              emotion: _selectedEmotion?.key ?? '',
+	                            );
+                            await ref.read(userProvider.notifier).ensureLocalUser();
+	                            if (!context.mounted) return;
+	                            Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) =>
                                     const MyScreen(showSkipLogin: true),

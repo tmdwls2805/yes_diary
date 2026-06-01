@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/screens/splash_screen.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize EasyLocalization
   await EasyLocalization.ensureInitialized();
+  await MobileAds.instance.initialize();
+
+  await SecureStorageService().resetIfFreshInstall();
 
   // Load environment variables
   await dotenv.load(fileName: ".env");

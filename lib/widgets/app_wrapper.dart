@@ -4,14 +4,19 @@ import 'package:yes_diary/providers/app_initialization_provider.dart';
 import 'package:yes_diary/screens/main_screen.dart';
 
 class AppWrapper extends ConsumerWidget {
-  const AppWrapper({super.key});
+  final int initialIndex;
+
+  const AppWrapper({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final initializationAsync = ref.watch(appInitializationProvider);
 
     return initializationAsync.when(
-      data: (_) => MainScreen(),
+      data: (_) => MainScreen(initialIndex: initialIndex),
       loading: () => const Scaffold(
         backgroundColor: Color(0xFF1A1A1A),
         body: Center(

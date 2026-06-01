@@ -10,8 +10,8 @@ import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
 import '../providers/diary_provider.dart';
-import '../screens/main_screen.dart';
 import '../screens/onboarding_screen.dart';
+import 'app_wrapper.dart';
 import 'confirm_dialog.dart';
 import 'nickname_setup_screen.dart';
 
@@ -650,9 +650,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                 '로그인 없이 앱을 이용할 수 있으나, 특정 기능에 제한이 있을 수 있습니다.\n그래도 로그인 없이 진행하시겠습니까?',
                           );
                           if (ok == true && context.mounted) {
+                            await ref.read(userProvider.notifier).ensureLocalUser();
+                            if (!context.mounted) return;
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                builder: (_) => const MainScreen(),
+                                builder: (_) => const AppWrapper(),
                               ),
                               (route) => false,
                             );

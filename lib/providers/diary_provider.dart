@@ -10,33 +10,34 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
 
   /// 지정된 날짜 범위의 일기를 불러와 상태를 갱신합니다.
   /// 삭제된 항목을 반영하기 위해 해당 범위의 기존 상태를 지우고 새로 채웁니다.
-  Future<void> loadDiariesForRange(DateTime startDate, DateTime endDate, String userId) async {
+  Future<void> loadDiariesForRange(
+      DateTime startDate, DateTime endDate, String userId) async {
     try {
       final diaries = await DatabaseService.instance.diaryRepository
           .getDiariesByDateRangeAndUserId(startDate, endDate, userId);
-      
+
       final Map<DateTime, DiaryEntry> diaryMap = {};
       for (var entry in diaries) {
-        final normalizedDate = DateTime(entry.date.year, entry.date.month, entry.date.day);
+        final normalizedDate =
+            DateTime(entry.date.year, entry.date.month, entry.date.day);
         diaryMap[normalizedDate] = entry;
       }
-      
+
       final newState = Map<DateTime, DiaryEntry>.from(state);
-      
+
       // 로드하려는 범위 내의 기존 항목들을 먼저 상태에서 제거합니다.
       // 이렇게 해야 DB에서 삭제된 항목이 상태에도 반영됩니다.
       newState.removeWhere((date, entry) {
         final normalizedDate = DateTime(date.year, date.month, date.day);
         // 범위 비교를 위해 isAfter와 isBefore를 사용합니다.
-        return !normalizedDate.isBefore(startDate) && 
-               !normalizedDate.isAfter(endDate);
+        return !normalizedDate.isBefore(startDate) &&
+            !normalizedDate.isAfter(endDate);
       });
-      
+
       // 새로 불러온 항목들을 상태에 추가합니다.
       newState.addAll(diaryMap);
-      
-      state = newState;
 
+      state = newState;
     } catch (e) {
       print('Failed to load diaries: $e');
     }
@@ -46,7 +47,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   Future<void> saveDiary(DiaryEntry entry) async {
     try {
       await DatabaseService.instance.diaryRepository.insertDiary(entry);
-      final normalizedDate = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      final normalizedDate =
+          DateTime(entry.date.year, entry.date.month, entry.date.day);
       // 기존 상태에 새 항목을 추가하거나 갱신합니다.
       state = {...state, normalizedDate: entry};
     } catch (e) {
@@ -58,7 +60,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   Future<void> updateDiary(DiaryEntry entry) async {
     try {
       await DatabaseService.instance.diaryRepository.updateDiary(entry);
-      final normalizedDate = DateTime(entry.date.year, entry.date.month, entry.date.day);
+      final normalizedDate =
+          DateTime(entry.date.year, entry.date.month, entry.date.day);
       // 기존 상태의 항목을 갱신합니다.
       state = {...state, normalizedDate: entry};
     } catch (e) {
@@ -69,9 +72,10 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   /// 특정 날짜의 일기를 DB와 상태 모두에서 삭제합니다.
   Future<void> deleteDiary(DateTime date, String userId) async {
     try {
-      await DatabaseService.instance.diaryRepository.deleteDiaryByDateAndUserId(date, userId);
+      await DatabaseService.instance.diaryRepository
+          .deleteDiaryByDateAndUserId(date, userId);
       final normalizedDate = DateTime(date.year, date.month, date.day);
-      
+
       // 상태에서도 해당 항목을 제거합니다.
       final newState = Map<DateTime, DiaryEntry>.from(state);
       newState.remove(normalizedDate);
@@ -111,6 +115,18 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
     }
   }
 
+  /// 로그인 전 로컬 UUID에 저장된 일기가 있는지 확인합니다.
+  Future<bool> hasLocalDiaries(String localUserId) async {
+    try {
+      final localDiaries = await DatabaseService.instance.diaryRepository
+          .getAllDiariesByUserId(localUserId);
+      return localDiaries.isNotEmpty;
+    } catch (e) {
+      print('Failed to check local diaries: $e');
+      return false;
+    }
+  }
+
   /// 특정 날짜에 일기가 있는지 확인합니다. (상태 우선 확인)
   Future<bool> hasDiaryOnDate(DateTime date, String userId) async {
     try {
@@ -120,7 +136,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
         return true;
       }
       // 상태에 없으면 DB에서 확인
-      return await DatabaseService.instance.diaryRepository.hasDiaryOnDateAndUserId(date, userId);
+      return await DatabaseService.instance.diaryRepository
+          .hasDiaryOnDateAndUserId(date, userId);
     } catch (e) {
       print('Failed to check diary existence: $e');
       return false;
@@ -140,7 +157,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
   }
 
   /// 서버에서 월별 일기를 가져와서 로컬 DB에 저장하고 상태 업데이트
-  Future<void> fetchAndSaveMonthlyDiaries(int year, int month, String userId) async {
+  Future<void> fetchAndSaveMonthlyDiaries(
+      int year, int month, String userId) async {
     try {
       print('서버에서 $year년 $month월 일기 가져오는 중...');
 
@@ -161,7 +179,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
 
           // 로컬 DB에 저장 (userId 포함)
           final entryWithUserId = diaryEntry.copyWith(userId: userId);
-          await DatabaseService.instance.diaryRepository.insertDiary(entryWithUserId);
+          await DatabaseService.instance.diaryRepository
+              .insertDiary(entryWithUserId);
 
           // 상태 업데이트
           final normalizedDate = DateTime(
@@ -171,7 +190,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
           );
           state = {...state, normalizedDate: entryWithUserId};
 
-          print('일기 저장 완료: ${entryWithUserId.date} (serverId: ${entryWithUserId.serverId})');
+          print(
+              '일기 저장 완료: ${entryWithUserId.date} (serverId: ${entryWithUserId.serverId})');
         } catch (e) {
           print('일기 변환/저장 실패: $e');
           continue;
@@ -186,7 +206,8 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
 }
 
 /// DiaryNotifier를 제공하는 메인 프로바이더
-final diaryProvider = StateNotifierProvider<DiaryNotifier, Map<DateTime, DiaryEntry>>((ref) {
+final diaryProvider =
+    StateNotifierProvider<DiaryNotifier, Map<DateTime, DiaryEntry>>((ref) {
   return DiaryNotifier();
 });
 

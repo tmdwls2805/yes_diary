@@ -61,6 +61,7 @@ dependencies:
   flutter_dotenv: ^5.1.0  # 환경변수 관리
   lottie: ^3.1.0  # Lottie 애니메이션
   easy_localization: ^3.0.8
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,12 @@ dev_dependencies:
   json_serializable: ^6.8.0
   riverpod_generator: ^2.4.0
   riverpod_lint: ^2.3.10
+
+dependency_overrides:
+  webview_flutter: 4.9.0
+  webview_flutter_android: 3.16.9
+  webview_flutter_wkwebview: 3.18.5
+  webview_flutter_platform_interface: 2.10.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
