@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/screens/main_screen.dart';
 import 'package:yes_diary/screens/onboarding_screen.dart';
+import 'package:yes_diary/services/token_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,14 +22,16 @@ class _SplashScreenState extends State<SplashScreen> {
   _navigateNext() async {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    final profile = await SecureStorageService().getOnboardingProfile();
+    final isLoggedIn = await TokenService.isLoggedIn();
+    final isOnboardingCompleted =
+        await SecureStorageService().isOnboardingCompleted();
     if (!mounted) return;
-    final hasProfile = (profile['nickname'] ?? '').isNotEmpty;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            hasProfile ? const MainScreen() : const OnboardingScreen(),
+        builder: (context) => isLoggedIn || isOnboardingCompleted
+            ? const MainScreen()
+            : const OnboardingScreen(),
       ),
     );
   }

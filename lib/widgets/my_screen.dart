@@ -5,11 +5,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 import 'dart:async';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
+import '../core/services/storage/secure_storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
 import '../providers/diary_provider.dart';
 import '../screens/main_screen.dart';
+import '../screens/onboarding_screen.dart';
 import 'confirm_dialog.dart';
 import 'nickname_setup_screen.dart';
 
@@ -116,6 +118,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
             'provider': user['provider'],
             'createdAt': user['createdAt'],
             'updatedAt': user['updatedAt'],
+            if (user['department'] != null) 'department': user['department'],
+            if (user['workStartTime'] != null) 'workStartTime': user['workStartTime'],
+            if (user['workEndTime'] != null) 'workEndTime': user['workEndTime'],
+            if (user['onboardingEmotion'] != null)
+              'onboardingEmotion': user['onboardingEmotion'],
           },
         );
 
@@ -131,6 +138,22 @@ class _MyScreenState extends ConsumerState<MyScreen> {
             print('createdAt 파싱 실패: $e');
           }
         }
+
+        if (user['department'] != null &&
+            user['workStartTime'] != null &&
+            user['workEndTime'] != null &&
+            user['onboardingEmotion'] != null) {
+          await SecureStorageService().saveOnboardingProfile(
+            nickname: user['nickname']?.toString() ?? '',
+            department: user['department'].toString(),
+            startTime: user['workStartTime'].toString(),
+            endTime: user['workEndTime'].toString(),
+            emotion: user['onboardingEmotion'].toString(),
+          );
+        }
+
+        // 기존 사용자는 로컬 데이터를 서버로 올리지 않고, 로컬 캐시를 비운 뒤 서버 데이터만 사용합니다.
+        await ref.read(diaryProvider.notifier).clearLocalDiaries();
 
         // 서버에서 현재 월의 일기 가져오기
         final now = DateTime.now();
@@ -267,7 +290,10 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       // 2. 로컬 UUID로 복귀
       final newUserId = await ref.read(userProvider.notifier).logout();
 
-      // 3. DiaryProvider 상태 초기화 (로컬 데이터를 다시 로드하기 위해)
+      // 3. 로그인 후 로그아웃하면 다시 온보딩부터 보도록 온보딩 상태를 초기화
+      await SecureStorageService().clearOnboardingProfile();
+
+      // 4. DiaryProvider 상태 초기화 (로컬 데이터를 다시 로드하기 위해)
       // 현재 월의 데이터를 새 userId로 다시 로드
       final now = DateTime.now();
       final startDate = DateTime(now.year, now.month, 1);
@@ -277,12 +303,11 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       print('로그아웃 완료 - 새 로컬 userId: $newUserId');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('my.logout_success'.tr()),
-            backgroundColor: const Color(0xFF2A2A2A),
-            duration: const Duration(seconds: 2),
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const OnboardingScreen(),
           ),
+          (_) => false,
         );
       }
     } catch (error) {

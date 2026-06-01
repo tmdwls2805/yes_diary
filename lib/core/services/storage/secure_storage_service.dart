@@ -47,6 +47,32 @@ class SecureStorageService {
         key: StorageKeys.onboardingEndTime, value: endTime);
     await _storage.write(
         key: StorageKeys.onboardingEmotion, value: emotion);
+    await _storage.write(
+        key: StorageKeys.onboardingCompleted, value: 'true');
+  }
+
+  Future<bool> isOnboardingCompleted() async {
+    return await _storage.read(key: StorageKeys.onboardingCompleted) == 'true';
+  }
+
+  Future<void> clearOnboardingProfile() async {
+    await Future.wait([
+      _storage.delete(key: StorageKeys.onboardingCompleted),
+      _storage.delete(key: StorageKeys.onboardingNickname),
+      _storage.delete(key: StorageKeys.onboardingDepartment),
+      _storage.delete(key: StorageKeys.onboardingStartTime),
+      _storage.delete(key: StorageKeys.onboardingEndTime),
+      _storage.delete(key: StorageKeys.onboardingEmotion),
+    ]);
+  }
+
+  Future<void> saveOnboardingNickname(String nickname) async {
+    await _storage.write(key: StorageKeys.onboardingNickname, value: nickname);
+  }
+
+  Future<void> saveOnboardingDepartment(String department) async {
+    await _storage.write(
+        key: StorageKeys.onboardingDepartment, value: department);
   }
 
   Future<Map<String, String?>> getOnboardingProfile() async {

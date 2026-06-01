@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'thank_you_screen.dart';
+import '../core/services/storage/secure_storage_service.dart';
 import '../services/auth_service.dart';
 import '../services/token_service.dart';
 import '../providers/user_provider.dart';
@@ -68,12 +69,21 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         return;
       }
 
+      final localUserId = ref.read(userProvider).userId;
+      final onboardingProfile =
+          await SecureStorageService().getOnboardingProfile();
+      final signupNickname = onboardingProfile['nickname'] ?? widget.nickname;
+
       // 서버에 닉네임 + PIN으로 회원가입
-      print('회원가입 시도: nickname=${widget.nickname}, password=$pin');
+      print('회원가입 시도: nickname=$signupNickname, password=$pin');
       final result = await _authService.signupWithKakao(
         accessToken: widget.kakaoAccessToken!,
-        nickname: widget.nickname,
+        nickname: signupNickname,
         password: pin,
+        department: onboardingProfile['department'],
+        workStartTime: onboardingProfile['startTime'],
+        workEndTime: onboardingProfile['endTime'],
+        onboardingEmotion: onboardingProfile['emotion'],
       );
 
       // 토큰 저장
@@ -100,6 +110,14 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
       if (user['createdAt'] != null) {
         await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
       }
+
+      // 신규 가입은 로그인 전 로컬 일기를 서버 계정으로 먼저 동기화합니다.
+      if (localUserId != null) {
+        await ref.read(diaryProvider.notifier).syncLocalDiariesToServer(localUserId);
+      }
+
+      // 동기화 성공 후 로컬 캐시를 비우고 서버 데이터만 다시 저장합니다.
+      await ref.read(diaryProvider.notifier).clearLocalDiaries();
 
       // 서버에서 현재 월의 일기 가져오기
       final now = DateTime.now();
@@ -146,11 +164,20 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         return;
       }
 
+      final localUserId = ref.read(userProvider).userId;
+      final onboardingProfile =
+          await SecureStorageService().getOnboardingProfile();
+      final signupNickname = onboardingProfile['nickname'] ?? widget.nickname;
+
       // 건너뛰기: PIN 없이 닉네임만으로 회원가입
-      print('회원가입 시도 (PIN 없이): nickname=${widget.nickname}');
+      print('회원가입 시도 (PIN 없이): nickname=$signupNickname');
       final result = await _authService.signupWithKakao(
         accessToken: widget.kakaoAccessToken!,
-        nickname: widget.nickname,
+        nickname: signupNickname,
+        department: onboardingProfile['department'],
+        workStartTime: onboardingProfile['startTime'],
+        workEndTime: onboardingProfile['endTime'],
+        onboardingEmotion: onboardingProfile['emotion'],
       );
 
       // 토큰 저장
@@ -177,6 +204,14 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
       if (user['createdAt'] != null) {
         await ref.read(userProvider.notifier).saveCreatedAt(DateTime.parse(user['createdAt']));
       }
+
+      // 신규 가입은 로그인 전 로컬 일기를 서버 계정으로 먼저 동기화합니다.
+      if (localUserId != null) {
+        await ref.read(diaryProvider.notifier).syncLocalDiariesToServer(localUserId);
+      }
+
+      // 동기화 성공 후 로컬 캐시를 비우고 서버 데이터만 다시 저장합니다.
+      await ref.read(diaryProvider.notifier).clearLocalDiaries();
 
       // 서버에서 현재 월의 일기 가져오기
       final now = DateTime.now();

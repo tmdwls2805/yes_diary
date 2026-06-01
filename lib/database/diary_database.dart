@@ -66,7 +66,6 @@ class DiaryDatabase {
         content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
         emotion_id INTEGER NOT NULL,
         userId TEXT,
-        title TEXT,
         serverId INTEGER,
         createdAt TEXT,
         updatedAt TEXT,
@@ -208,16 +207,9 @@ class DiaryDatabase {
       await db.execute('DROP TABLE temp_diary_entries;');
     }
 
-    // 버전 5: title, serverId, createdAt, updatedAt 컬럼 추가
+    // 버전 5: serverId, createdAt, updatedAt 컬럼 추가
     if (oldVersion < 5) {
       final now = DateTime.now().toIso8601String();
-
-      // title 컬럼 추가
-      try {
-        await db.execute('ALTER TABLE $_tableName ADD COLUMN title TEXT;');
-      } catch (e) {
-        print('title column already exists, skipping: $e');
-      }
 
       // serverId 컬럼 추가 (서버 ID 저장용)
       try {
@@ -343,6 +335,12 @@ class DiaryDatabase {
       where: 'date = ? AND userId = ?',
       whereArgs: [date.toIso8601String(), userId],
     );
+  }
+
+  /// 로컬에 저장된 모든 일기를 삭제합니다.
+  Future<void> clearAllDiaries() async {
+    final db = await database;
+    await db.delete(_tableName);
   }
 
   /// 날짜 범위로 일기를 조회합니다.

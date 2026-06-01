@@ -81,6 +81,36 @@ class DiaryNotifier extends StateNotifier<Map<DateTime, DiaryEntry>> {
     }
   }
 
+  /// 로컬 DB와 메모리 상태에 저장된 모든 일기를 비웁니다.
+  Future<void> clearLocalDiaries() async {
+    try {
+      await DatabaseService.instance.diaryRepository.clearAllDiaries();
+      state = {};
+    } catch (e) {
+      print('Failed to clear local diaries: $e');
+      rethrow;
+    }
+  }
+
+  /// 로그인 전 로컬 UUID에 저장된 일기를 서버 계정으로 동기화합니다.
+  Future<void> syncLocalDiariesToServer(String localUserId) async {
+    try {
+      final localDiaries = await DatabaseService.instance.diaryRepository
+          .getAllDiariesByUserId(localUserId);
+
+      if (localDiaries.isEmpty) {
+        print('동기화할 로컬 일기가 없습니다');
+        return;
+      }
+
+      await _authService.syncLocalDiaries(localDiaries);
+      print('로컬 일기 ${localDiaries.length}개 서버 동기화 완료');
+    } catch (e) {
+      print('Failed to sync local diaries: $e');
+      rethrow;
+    }
+  }
+
   /// 특정 날짜에 일기가 있는지 확인합니다. (상태 우선 확인)
   Future<bool> hasDiaryOnDate(DateTime date, String userId) async {
     try {

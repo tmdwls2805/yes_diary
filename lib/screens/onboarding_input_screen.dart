@@ -180,6 +180,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
     if (!mounted) return;
     if (currentStep == 0) {
       _nickname = text;
+      await SecureStorageService().saveOnboardingNickname(text);
       _runFollowUp([
         _FollowUp('$text 님, 안녕하세요.', 'assets/emotion/yellow.svg'),
         _FollowUp('$text 님은 어느 부서에서,'),
@@ -187,6 +188,7 @@ class _OnboardingInputScreenState extends State<OnboardingInputScreen>
       ], reEnableInput: true);
     } else if (currentStep == 1) {
       _department = text;
+      await SecureStorageService().saveOnboardingDepartment(text);
       _runFollowUp([
         _FollowUp('그럼, $text로 세팅할게요!', 'assets/emotion/blue.svg'),
         const _FollowUp('출/퇴근 시간도 알려주시면'),

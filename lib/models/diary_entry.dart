@@ -3,7 +3,6 @@ class DiaryEntry {
   final String content;
   final int emotionId;
   final String? userId;
-  final String? title;
   final int? serverId; // 서버와 동기화된 일기의 백엔드 ID
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -13,7 +12,6 @@ class DiaryEntry {
     required this.content,
     required this.emotionId,
     this.userId,
-    this.title,
     this.serverId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -54,7 +52,6 @@ class DiaryEntry {
       'content': content,
       'emotion_id': emotionId,
       'userId': userId,
-      'title': title,
       'serverId': serverId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -68,7 +65,6 @@ class DiaryEntry {
       content: map['content'],
       emotionId: map['emotion_id'],
       userId: map['userId'],
-      title: map['title'],
       serverId: map['serverId'],
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : null,
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : null,
@@ -79,7 +75,6 @@ class DiaryEntry {
   Map<String, dynamic> toSyncJson() {
     return {
       'localId': serverId, // 로컬에서는 serverId를 localId로 사용
-      'title': title ?? '', // title이 없으면 빈 문자열
       'content': content,
       'emotionId': emotionId,
       'date': '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
@@ -94,7 +89,6 @@ class DiaryEntry {
       content: json['content'],
       emotionId: json['emotionInfo']?['id'] ?? json['emotionId'] ?? 1,
       userId: json['userId']?.toString(),
-      title: json['title'],
       serverId: json['id'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
@@ -109,7 +103,6 @@ class DiaryEntry {
         other.content == content &&
         other.emotionId == emotionId &&
         other.userId == userId &&
-        other.title == title &&
         other.serverId == serverId;
   }
 
@@ -119,12 +112,11 @@ class DiaryEntry {
       content.hashCode ^
       emotionId.hashCode ^
       userId.hashCode ^
-      title.hashCode ^
       serverId.hashCode;
 
   @override
   String toString() {
-    return 'DiaryEntry(date: $date, content: $content, emotionId: $emotionId, userId: $userId, title: $title, serverId: $serverId, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'DiaryEntry(date: $date, content: $content, emotionId: $emotionId, userId: $userId, serverId: $serverId, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   /// DiaryEntry 복사 (업데이트용)
@@ -133,7 +125,6 @@ class DiaryEntry {
     String? content,
     int? emotionId,
     String? userId,
-    String? title,
     int? serverId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -143,7 +134,6 @@ class DiaryEntry {
       content: content ?? this.content,
       emotionId: emotionId ?? this.emotionId,
       userId: userId ?? this.userId,
-      title: title ?? this.title,
       serverId: serverId ?? this.serverId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now(), // 업데이트 시 현재 시간으로

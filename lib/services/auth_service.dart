@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:yes_diary/models/diary_entry.dart';
 import 'token_service.dart';
 
 class AuthService {
@@ -164,6 +165,10 @@ class AuthService {
     required String accessToken,
     required String nickname,
     String? password,
+    String? department,
+    String? workStartTime,
+    String? workEndTime,
+    String? onboardingEmotion,
   }) async {
     try {
       // 회원가입도 Interceptor를 건너뛰어야 함 (아직 토큰이 없으므로)
@@ -178,6 +183,10 @@ class AuthService {
           'accessToken': accessToken,
           'nickname': nickname,
           if (password != null) 'password': password,
+          if (department != null) 'department': department,
+          if (workStartTime != null) 'workStartTime': workStartTime,
+          if (workEndTime != null) 'workEndTime': workEndTime,
+          if (onboardingEmotion != null) 'onboardingEmotion': onboardingEmotion,
         },
         options: Options(
           headers: {
@@ -254,6 +263,35 @@ class AuthService {
     } catch (e) {
       print('일기 조회 오류: $e');
       return null;
+    }
+  }
+
+  /// 로컬 일기를 서버로 동기화합니다.
+  /// POST /api/diaries/sync
+  Future<void> syncLocalDiaries(List<DiaryEntry> diaries) async {
+    if (diaries.isEmpty) return;
+
+    try {
+      final response = await _dio.post(
+        '/diaries/sync',
+        data: {
+          'localDiaries': diaries.map((diary) => diary.toSyncJson()).toList(),
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      final stream = response.data?.stream;
+      if (stream != null) {
+        await stream.drain();
+      }
+    } catch (e) {
+      print('로컬 일기 동기화 오류: $e');
+      rethrow;
     }
   }
 }

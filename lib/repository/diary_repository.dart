@@ -47,6 +47,11 @@ class DiaryRepository {
     await _database.deleteDiaryByDateAndUserId(date, userId);
   }
 
+  /// 로컬에 저장된 모든 일기를 삭제합니다.
+  Future<void> clearAllDiaries() async {
+    await _database.clearAllDiaries();
+  }
+
   /// 날짜 범위로 일기를 조회합니다.
   Future<List<DiaryEntry>> getDiariesByDateRange(
     DateTime startDate,
