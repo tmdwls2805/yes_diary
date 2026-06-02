@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yes_diary/core/constants/app_image.dart';
-import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/providers/diary_provider.dart';
 import 'package:yes_diary/providers/user_provider.dart';
-import 'package:yes_diary/services/ad_service.dart';
 import 'package:yes_diary/widgets/confirm_dialog.dart';
 import 'package:yes_diary/widgets/diary_emotion_selector.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
@@ -68,6 +66,18 @@ class _DiaryEmotionSelectScreenState
     super.dispose();
   }
 
+  String _wrapEveryNChars(String text, int n) {
+    final chars = text.characters.toList();
+    final buffer = StringBuffer();
+    for (var i = 0; i < chars.length; i++) {
+      if (i != 0 && i % n == 0) {
+        buffer.write('\n');
+      }
+      buffer.write(chars[i]);
+    }
+    return buffer.toString();
+  }
+
   String _emotionAt(int virtualIndex) {
     final idx = virtualIndex % _emotionOrder.length;
     return _emotionOrder[idx];
@@ -108,7 +118,11 @@ class _DiaryEmotionSelectScreenState
   Future<void> _handleCancel() async {
     final bool? shouldExit = await showExitConfirmDialog(context);
     if (shouldExit == true && mounted) {
-      Navigator.of(context).pop(false);
+      final navigator = Navigator.of(context);
+      navigator.pop(false); // 감정 선택 화면 닫기
+      if (navigator.canPop()) {
+        navigator.pop(false); // 작성 화면도 함께 닫기
+      }
     }
   }
 
@@ -161,20 +175,8 @@ class _DiaryEmotionSelectScreenState
       await ref.read(diaryProvider.notifier).saveDiary(diaryEntry);
     }
 
-    final localUserId = await SecureStorageService().getLocalUserId();
-    final shouldShowAd = userData.userId == localUserId;
-
-    if (!mounted) return;
-    await showSaveConfirmDialog(context);
-
     if (!mounted) return;
     Navigator.of(context).pop(true);
-
-    if (shouldShowAd && widget.showAdOnSave) {
-      Future<void>.microtask(
-        AdService.showDiarySavedInterstitialIfAvailable,
-      );
-    }
   }
 
   @override
@@ -245,7 +247,7 @@ class _DiaryEmotionSelectScreenState
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                    top: 24,
+                                    top: 16,
                                     left: 16,
                                     right: 16,
                                   ),
@@ -253,12 +255,15 @@ class _DiaryEmotionSelectScreenState
                                     isCenter &&
                                             _cardMessageController.text
                                                 .isNotEmpty
-                                        ? _cardMessageController.text
+                                        ? _wrapEveryNChars(
+                                            _cardMessageController.text,
+                                            8,
+                                          )
                                         : (AppImages.emotionCardTexts[emotion] ??
                                             ''),
                                     textAlign: TextAlign.center,
                                     softWrap: true,
-                                    maxLines: 2,
+                                    maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       color: Colors.white,

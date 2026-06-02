@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
 import 'package:yes_diary/screens/diary_view_screen.dart';
+import 'package:yes_diary/services/ad_service.dart';
+import 'package:yes_diary/widgets/confirm_dialog.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:yes_diary/core/constants/app_image.dart';
@@ -27,6 +30,19 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
   late PageController _pageController;
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
+
+  Future<void> _handleDiarySaved(BuildContext context) async {
+    if (!mounted) return;
+    await showSaveConfirmDialog(context);
+    if (!mounted) return;
+    final userData = ref.read(userProvider);
+    final localUserId = await SecureStorageService().getLocalUserId();
+    final isLocalUser =
+        localUserId != null && userData.userId == localUserId;
+    if (isLocalUser) {
+      await AdService.showDiarySavedInterstitialIfAvailable();
+    }
+  }
 
   // 감정 이름과 SVG 경로 매핑 (AppImages에서 가져옴)
   final Map<String, String> _emotionSvgPaths = AppImages.emotionFaceSvgPaths;
@@ -453,12 +469,21 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
                               // 일기가 없는 경우 오늘 날짜인지 확인
                               if (normalizedSelectedDay.isAtSameMomentAs(normalizedToday)) {
                                 // 오늘 날짜이면서 일기가 없으면 작성 화면으로
-                                Navigator.push(
+                                Navigator.push<bool>(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => DiaryWriteScreen(selectedDate: day),
+                                    builder: (context) => DiaryWriteScreen(
+                                      selectedDate: day,
+                                      showAdOnSave: false,
+                                    ),
                                   ),
-                                ).then((_) => _loadDiariesForMonth(calendarState.focusedDay));
+                                ).then((result) async {
+                                  await _loadDiariesForMonth(
+                                      calendarState.focusedDay);
+                                  if (result == true && mounted) {
+                                    await _handleDiarySaved(context);
+                                  }
+                                });
                                 print('오늘 날짜 일기 없음 - 작성 화면으로: ${day.toIso8601String()}');
                               } else {
                                 // 오늘이 아닌 날짜이면서 일기가 없으면 통합된 화면으로 (프롬프트 표시)
@@ -473,13 +498,21 @@ class _CustomCalendarState extends ConsumerState<CustomCalendar> {
                             }
                           } else {
                               // userId가 없는 경우 기본적으로 작성 화면으로
-                              Navigator.push(
+                              Navigator.push<bool>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      DiaryWriteScreen(selectedDate: day),
+                                  builder: (context) => DiaryWriteScreen(
+                                    selectedDate: day,
+                                    showAdOnSave: false,
+                                  ),
                                 ),
-                              ).then((_) => _loadDiariesForMonth(calendarState.focusedDay)); // 돌아왔을 때 데이터 새로고침
+                              ).then((result) async {
+                                await _loadDiariesForMonth(
+                                    calendarState.focusedDay);
+                                if (result == true && mounted) {
+                                  await _handleDiarySaved(context);
+                                }
+                              });
                               print('userId 없음. 일기 작성 화면으로 이동.');
                           }
                         },

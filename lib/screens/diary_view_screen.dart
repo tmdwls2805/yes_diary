@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:yes_diary/core/constants/app_image.dart';
 import 'package:yes_diary/widgets/confirm_dialog.dart';
 import 'package:yes_diary/models/diary_entry.dart';
 import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/services/ad_service.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
-import 'package:yes_diary/widgets/diary_body_with_navigation.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
 import 'package:yes_diary/screens/diary_write_screen.dart';
 import 'package:intl/intl.dart';
@@ -137,6 +137,42 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
     await AdService.showDiarySavedInterstitialIfAvailable();
   }
 
+  Future<void> _handleEditDiary() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DiaryWriteScreen(
+          selectedDate: _currentDate,
+          existingEntry: _diaryEntry,
+          showAdOnSave: false,
+        ),
+      ),
+    );
+    await _loadDiaryEntry();
+    if (result == true && mounted) {
+      await showSaveConfirmDialog(context);
+      if (!mounted) return;
+      await _showLocalUserDiaryAdIfNeeded();
+    }
+  }
+
+  Future<void> _handleDeleteDiary() async {
+    if (_diaryEntry == null || _currentUserId == null) return;
+
+    final bool? confirmed = await showDeleteConfirmDialog(context);
+    if (confirmed != true || !mounted) return;
+
+    final shouldShowAd = await _isLocalUser();
+    await DatabaseService.instance.diaryRepository
+        .deleteDiaryByDateAndUserId(_currentDate, _currentUserId!);
+
+    await _loadDiaryEntry();
+
+    if (shouldShowAd) {
+      await AdService.showDiarySavedInterstitialIfAvailable();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,18 +180,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
       appBar: DiaryHeader(
         selectedDate: _currentDate,
         leftButtonText: '닫기',
-        rightButtonWidget: _diaryEntry != null
-            ? GestureDetector(
-                onTap: _toggleDropdown,
-                child: SvgPicture.asset(
-                  _isDropdownVisible
-                      ? 'assets/icon/edit_active.svg'
-                      : 'assets/icon/edit_inactive.svg',
-                  width: 24,
-                  height: 24,
-                ),
-              )
-            : null,
+        rightButtonText: _diaryEntry != null ? '수정' : null,
+        onRightPressed: _diaryEntry != null ? _handleEditDiary : null,
       ),
       body: Stack(
         children: [
@@ -184,29 +210,79 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                         width: double.infinity,
                         height: double.infinity,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            DiaryBodyWithNavigation(
-                              hardcodedImagePath:
-                                  'assets/emotion/gray_body.svg',
-                              customText:
-                                  '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
-                              onLeftSwipe: _canNavigateToPrevious()
-                                  ? () {
-                                      final previousDay = _currentDate
-                                          .subtract(const Duration(days: 1));
-                                      _navigateToDate(previousDay);
-                                    }
-                                  : null,
-                              onRightSwipe: _canNavigateToNext()
-                                  ? () {
-                                      final nextDay = _currentDate
-                                          .add(const Duration(days: 1));
-                                      _navigateToDate(nextDay);
-                                    }
-                                  : null,
-                              imageWidth: 92,
-                              imageHeight: 142,
+                            const SizedBox(height: 94.0),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 42,
+                                    height: 42,
+                                    child: _canNavigateToPrevious()
+                                        ? IconButton(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              final previousDay = _currentDate
+                                                  .subtract(const Duration(
+                                                      days: 1));
+                                              _navigateToDate(previousDay);
+                                            },
+                                            icon: Transform.rotate(
+                                              angle: 3.14159,
+                                              child: SvgPicture.asset(
+                                                'assets/button/swipe.svg',
+                                                width: 42,
+                                                height: 42,
+                                              ),
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                  Image.asset(
+                                    'assets/emotion/trash.png',
+                                    height: 94,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  SizedBox(
+                                    width: 42,
+                                    height: 42,
+                                    child: _canNavigateToNext()
+                                        ? IconButton(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              final nextDay = _currentDate
+                                                  .add(const Duration(days: 1));
+                                              _navigateToDate(nextDay);
+                                            },
+                                            icon: SvgPicture.asset(
+                                              'assets/button/swipe.svg',
+                                              width: 42,
+                                              height: 42,
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0),
+                              child: Text(
+                                '${DateFormat('M월 d일').format(_currentDate)}은 일기를 작성하지 않았어요.\n이날의 일기를 작성하시겠습니까?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                             const SizedBox(height: 28.0),
                             Center(
@@ -230,11 +306,11 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                       // [수정] 반환 값을 받도록 변경
                                       // 글쓰기 화면에서 돌아오면 항상 데이터를 새로고침
                                       await _loadDiaryEntry();
-                                      // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
+                                      // 저장 성공 시: 팝업 → 확인 → 광고
                                       if (result == true && mounted) {
-                                        await _showLocalUserDiaryAdIfNeeded();
+                                        await showSaveConfirmDialog(context);
                                         if (!mounted) return;
-                                        showSaveConfirmDialog(context);
+                                        await _showLocalUserDiaryAdIfNeeded();
                                       }
                                     });
                                   },
@@ -293,28 +369,107 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                         width: double.infinity,
                         height: double.infinity,
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            DiaryBodyWithNavigation(
-                              emotion: _diaryEntry!.emotionName,
-                              onLeftSwipe: _canNavigateToPrevious()
-                                  ? () {
-                                      final previousDay = _currentDate
-                                          .subtract(const Duration(days: 1));
-                                      _navigateToDate(previousDay);
-                                    }
-                                  : null,
-                              onRightSwipe: _canNavigateToNext()
-                                  ? () {
-                                      final nextDay = _currentDate
-                                          .add(const Duration(days: 1));
-                                      _navigateToDate(nextDay);
-                                    }
-                                  : null,
-                              imageWidth: 92,
-                              imageHeight: 142,
+                            const SizedBox(height: 28.0),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16.0),
+                              child: SizedBox(
+                                height: 216,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                  SizedBox(
+                                    width: 42,
+                                    height: 42,
+                                    child: _canNavigateToPrevious()
+                                        ? IconButton(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              final previousDay = _currentDate
+                                                  .subtract(const Duration(
+                                                      days: 1));
+                                              _navigateToDate(previousDay);
+                                            },
+                                            icon: Transform.rotate(
+                                              angle: 3.14159,
+                                              child: SvgPicture.asset(
+                                                'assets/button/swipe.svg',
+                                                width: 42,
+                                                height: 42,
+                                              ),
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                  Stack(
+                                    alignment: Alignment.topCenter,
+                                    children: [
+                                      Image.asset(
+                                        AppImages.emotionCardImagePaths[
+                                                _diaryEntry!.emotionName] ??
+                                            AppImages
+                                                .emotionCardImagePaths['red']!,
+                                        height: 216,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 16,
+                                          left: 16,
+                                          right: 16,
+                                        ),
+                                        child: Text(
+                                          (_diaryEntry!.cardMessage != null &&
+                                                  _diaryEntry!
+                                                      .cardMessage!.isNotEmpty)
+                                              ? _diaryEntry!.cardMessage!
+                                              : (AppImages.emotionCardTexts[
+                                                      _diaryEntry!
+                                                          .emotionName] ??
+                                                  ''),
+                                          textAlign: TextAlign.center,
+                                          softWrap: true,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'Pretendard',
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    width: 42,
+                                    height: 42,
+                                    child: _canNavigateToNext()
+                                        ? IconButton(
+                                            padding: EdgeInsets.zero,
+                                            onPressed: () {
+                                              final nextDay = _currentDate
+                                                  .add(const Duration(days: 1));
+                                              _navigateToDate(nextDay);
+                                            },
+                                            icon: SvgPicture.asset(
+                                              'assets/button/swipe.svg',
+                                              width: 42,
+                                              height: 42,
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ),
+                                ],
+                              ),
+                              ),
                             ),
-                            const SizedBox(height: 40.0),
+                            const SizedBox(height: 28.0),
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -325,7 +480,35 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 42.0),
+                            const SizedBox(height: 16.0),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0),
+                              child: SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: ElevatedButton(
+                                  onPressed: _handleDeleteDiary,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFFF4646),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    '감정 해소 완료',
+                                    style: TextStyle(
+                                      fontFamily: 'Pretendard',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 56.0),
                           ],
                         ),
                       ),
@@ -361,11 +544,11 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                             // [수정] 반환 값을 받도록 변경
                             // 수정 화면에서 돌아오면 항상 데이터를 새로고침
                             await _loadDiaryEntry();
-                            // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
+                            // 저장 성공 시: 팝업 → 확인 → 광고
                             if (result == true && mounted) {
-                              await _showLocalUserDiaryAdIfNeeded();
+                              await showSaveConfirmDialog(context);
                               if (!mounted) return;
-                              showSaveConfirmDialog(context);
+                              await _showLocalUserDiaryAdIfNeeded();
                             }
                           });
                         },

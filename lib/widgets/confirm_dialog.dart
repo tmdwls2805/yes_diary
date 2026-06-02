@@ -63,7 +63,7 @@ Future<bool?> showCustomConfirmDialog({
                         content,
                         style: const TextStyle(
                           color: Color(0xFF535353),
-                          fontSize: 14,
+                          fontSize: 16,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.left,
@@ -189,7 +189,7 @@ Future<void> showCustomAlertDialog({
                         content,
                         style: const TextStyle(
                           color: Color(0xFF535353),
-                          fontSize: 14,
+                          fontSize: 16,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.left,
@@ -236,7 +236,7 @@ Future<bool?> showDeleteConfirmDialog(BuildContext context) {
   return showCustomConfirmDialog(
     context: context,
     svgAsset: 'assets/emotion/pink.svg',
-    title: '정말 삭제할까요?',
+    title: '그래.. 잊어줄게...',
     content: '삭제하신 일기는 복구할 수 없습니다.\n정말 삭제하시겠습니까?',
   );
 }

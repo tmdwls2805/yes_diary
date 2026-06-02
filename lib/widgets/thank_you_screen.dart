@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../core/services/storage/secure_storage_service.dart';
 import '../screens/diary_write_screen.dart';
+import '../services/ad_service.dart';
 import 'app_wrapper.dart';
+import 'confirm_dialog.dart';
 
 class ThankYouScreen extends StatelessWidget {
   const ThankYouScreen({super.key});
@@ -58,13 +61,23 @@ class ThankYouScreen extends StatelessWidget {
                     // 메인 화면이 로드된 후 일기 작성 화면으로 이동
                     await Future.delayed(const Duration(milliseconds: 100));
                     if (context.mounted) {
-                      Navigator.of(context).push(
+                      final result = await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
                           builder: (context) => DiaryWriteScreen(
                             selectedDate: DateTime.now(),
+                            showAdOnSave: false,
                           ),
                         ),
                       );
+                      if (result == true && context.mounted) {
+                        await showSaveConfirmDialog(context);
+                        final localUserId =
+                            await SecureStorageService().getLocalUserId();
+                        if (localUserId != null) {
+                          await AdService
+                              .showDiarySavedInterstitialIfAvailable();
+                        }
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
