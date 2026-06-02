@@ -433,7 +433,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 48),
+                    SizedBox(height: MediaQuery.of(context).padding.top + 48),
                     FutureBuilder<Map<String, dynamic>?>(
                       future: TokenService.getUserInfo(),
                       builder: (context, userSnapshot) {
