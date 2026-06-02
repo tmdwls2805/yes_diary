@@ -6,7 +6,7 @@ import '../models/emotion.dart';
 
 class DiaryDatabase {
   static const String _databaseName = 'diary_v4.db';  // 새 DB 파일 사용
-  static const int _databaseVersion = 5;  // 버전 5로 업데이트 (새 필드 추가)
+  static const int _databaseVersion = 6;  // 버전 6: cardMessage 컬럼 추가
   static const String _tableName = 'diary_entries';
   static const String _emotionsTableName = 'emotions';
 
@@ -65,6 +65,7 @@ class DiaryDatabase {
         date TEXT PRIMARY KEY,
         content TEXT NOT NULL CHECK(LENGTH(content) <= 2000),
         emotion_id INTEGER NOT NULL,
+        cardMessage TEXT,
         userId TEXT,
         serverId INTEGER,
         createdAt TEXT,
@@ -232,6 +233,15 @@ class DiaryDatabase {
         await db.execute('UPDATE $_tableName SET updatedAt = ? WHERE updatedAt IS NULL;', [now]);
       } catch (e) {
         print('updatedAt column already exists, skipping: $e');
+      }
+    }
+
+    // 버전 6: cardMessage 컬럼 추가 (감정 카드 위 메시지)
+    if (oldVersion < 6) {
+      try {
+        await db.execute('ALTER TABLE $_tableName ADD COLUMN cardMessage TEXT;');
+      } catch (e) {
+        print('cardMessage column already exists, skipping: $e');
       }
     }
   }

@@ -1,37 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
 import 'package:yes_diary/models/diary_entry.dart';
-import 'package:yes_diary/providers/diary_provider.dart';
-import 'package:yes_diary/providers/user_provider.dart';
-import 'package:yes_diary/services/ad_service.dart';
+import 'package:yes_diary/screens/diary_emotion_select_screen.dart';
 import 'package:yes_diary/widgets/diary_header.dart';
-import 'package:yes_diary/widgets/diary_emotion_selector.dart';
 import 'package:yes_diary/widgets/diary_content_field.dart';
 import 'package:yes_diary/widgets/confirm_dialog.dart';
 
-class DiaryWriteScreen extends ConsumerStatefulWidget {
+class DiaryWriteScreen extends StatefulWidget {
   final DateTime selectedDate;
   final DiaryEntry? existingEntry;
+  final bool showAdOnSave;
 
-  const DiaryWriteScreen(
-      {Key? key, required this.selectedDate, this.existingEntry})
-      : super(key: key);
+  const DiaryWriteScreen({
+    super.key,
+    required this.selectedDate,
+    this.existingEntry,
+    this.showAdOnSave = true,
+  });
 
   @override
-  ConsumerState<DiaryWriteScreen> createState() => _DiaryWriteScreenState();
+  State<DiaryWriteScreen> createState() => _DiaryWriteScreenState();
 }
 
-class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
+class _DiaryWriteScreenState extends State<DiaryWriteScreen> {
   final TextEditingController _contentController = TextEditingController();
-  String? _selectedEmotion;
 
   String _initialContent = '';
-  String? _initialEmotion;
 
-  bool get _isModified =>
-      _contentController.text != _initialContent ||
-      _selectedEmotion != _initialEmotion;
+  bool get _isModified => _contentController.text != _initialContent;
 
   @override
   void initState() {
@@ -47,10 +42,8 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
   void _loadExistingData() {
     if (widget.existingEntry != null) {
       _contentController.text = widget.existingEntry!.content;
-      _selectedEmotion = widget.existingEntry!.emotionName;
     }
     _initialContent = _contentController.text;
-    _initialEmotion = _selectedEmotion;
   }
 
   void _handleCancel() async {
@@ -65,48 +58,22 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
     }
   }
 
-  Future<void> _saveDiary() async {
-    final userData = ref.read(userProvider);
+  Future<void> _openEmotionSelect() async {
+    FocusScope.of(context).unfocus();
 
-    if (userData.userId == null) {
-      print('User ID is null. Cannot save diary.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('사용자 ID를 불러올 수 없습니다. 다시 시도해 주세요.')),
-      );
-      return;
-    }
-
-    if (_selectedEmotion == null) {
-      print('Emotion is not selected.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('감정을 선택해주세요!')),
-      );
-      return;
-    }
-
-    final diaryEntry = DiaryEntry(
-      date: widget.selectedDate,
-      content: _contentController.text,
-      emotionId: DiaryEntry.emotionNameToId(_selectedEmotion!),
-      userId: userData.userId!,
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => DiaryEmotionSelectScreen(
+          selectedDate: widget.selectedDate,
+          content: _contentController.text,
+          existingEntry: widget.existingEntry,
+          showAdOnSave: widget.showAdOnSave,
+        ),
+      ),
     );
 
-    if (widget.existingEntry != null) {
-      await ref.read(diaryProvider.notifier).updateDiary(diaryEntry);
-    } else {
-      await ref.read(diaryProvider.notifier).saveDiary(diaryEntry);
-    }
-
-    final localUserId = await SecureStorageService().getLocalUserId();
-    final shouldShowAd = userData.userId == localUserId;
-
-    if (!mounted) return;
-    Navigator.pop(context, true);
-
-    if (shouldShowAd) {
-      Future<void>.microtask(
-        AdService.showDiarySavedInterstitialIfAvailable,
-      );
+    if (result == true && mounted) {
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -129,45 +96,90 @@ class _DiaryWriteScreenState extends ConsumerState<DiaryWriteScreen> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: const Color(0xFF1A1A1A),
         appBar: DiaryHeader(
           selectedDate: widget.selectedDate,
-          leftButtonText: '취소',
-          rightButtonText: '저장',
+          leftButtonText: '뒤로',
           onLeftPressed: _handleCancel,
-          onRightPressed: _saveDiary,
         ),
         body: GestureDetector(
           onTap: () {
             FocusScope.of(context).unfocus();
           },
-          child: Container(
-            color: const Color(0xFF1A1A1A),
-            width: double.infinity,
-            height: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                DiaryEmotionSelector(
-                  selectedEmotion: _selectedEmotion,
-                  onEmotionSelected: (emotion) {
-                    setState(() {
-                      _selectedEmotion = emotion;
-                    });
-                  },
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DiaryContentField(
-                      controller: _contentController,
-                      isReadOnly: false,
+          child: AnimatedPadding(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              color: const Color(0xFF1A1A1A),
+              width: double.infinity,
+              height: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Center(
+                      child: Text(
+                        '오늘의 감정을 작성해주세요!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Pretendard',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 42.0),
-              ],
+                  const SizedBox(height: 35),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: DiaryContentField(
+                        controller: _contentController,
+                        isReadOnly: false,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      height: 56,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _openEmotionSelect,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4646),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          '작성 완료',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: 'Pretendard',
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 56),
+                ],
+              ),
             ),
           ),
         ),

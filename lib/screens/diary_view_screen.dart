@@ -134,9 +134,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
 
   Future<void> _showLocalUserDiaryAdIfNeeded() async {
     if (!await _isLocalUser()) return;
-    Future<void>.microtask(
-      AdService.showDiarySavedInterstitialIfAvailable,
-    );
+    await AdService.showDiarySavedInterstitialIfAvailable();
   }
 
   @override
@@ -224,7 +222,9 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => DiaryWriteScreen(
-                                            selectedDate: _currentDate),
+                                          selectedDate: _currentDate,
+                                          showAdOnSave: false,
+                                        ),
                                       ),
                                     ).then((result) async {
                                       // [수정] 반환 값을 받도록 변경
@@ -232,8 +232,9 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                                       await _loadDiaryEntry();
                                       // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
                                       if (result == true && mounted) {
-                                        showSaveConfirmDialog(context);
                                         await _showLocalUserDiaryAdIfNeeded();
+                                        if (!mounted) return;
+                                        showSaveConfirmDialog(context);
                                       }
                                     });
                                   },
@@ -353,6 +354,7 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                               builder: (context) => DiaryWriteScreen(
                                 selectedDate: _currentDate,
                                 existingEntry: _diaryEntry,
+                                showAdOnSave: false,
                               ),
                             ),
                           ).then((result) async {
@@ -361,8 +363,9 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                             await _loadDiaryEntry();
                             // 만약 저장(true)이 성공적으로 이루어졌다면 다이얼로그를 표시
                             if (result == true && mounted) {
-                              showSaveConfirmDialog(context);
                               await _showLocalUserDiaryAdIfNeeded();
+                              if (!mounted) return;
+                              showSaveConfirmDialog(context);
                             }
                           });
                         },
@@ -416,10 +419,8 @@ class _DiaryViewScreenState extends State<DiaryViewScreen> {
                               await _loadDiaryEntry();
 
                               if (shouldShowAd) {
-                                Future<void>.microtask(
-                                  AdService
-                                      .showDiarySavedInterstitialIfAvailable,
-                                );
+                                await AdService
+                                    .showDiarySavedInterstitialIfAvailable();
                               }
                             }
                           }

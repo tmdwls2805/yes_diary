@@ -42,9 +42,10 @@ class DiaryHeader extends StatelessWidget implements PreferredSizeWidget {
           title: Text(
             DateFormat('yyyy.MM.dd').format(selectedDate),
             style: const TextStyle(
-              color: Colors.white, 
-              fontSize: 24, 
-              fontWeight: FontWeight.bold
+              color: Colors.white,
+              fontFamily: 'Pretendard',
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
           centerTitle: true,
