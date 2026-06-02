@@ -423,9 +423,106 @@ class _MyScreenState extends ConsumerState<MyScreen> {
       backgroundColor: const Color(0xFF1A1A1A),
       body: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 0),
-          child: Column(
+        child: FutureBuilder<bool>(
+          future: TokenService.isLoggedIn(),
+          builder: (context, snapshot) {
+            final isLoggedIn = snapshot.data ?? false;
+            if (isLoggedIn) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 48),
+                    FutureBuilder<Map<String, dynamic>?>(
+                      future: TokenService.getUserInfo(),
+                      builder: (context, userSnapshot) {
+                        final nickname =
+                            userSnapshot.data?['nickname']?.toString() ?? '';
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$nickname 님\n안녕하세요!',
+                              textAlign: TextAlign.left,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'Pretendard',
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 36),
+                            const Text(
+                              '월별 리포트',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'Pretendard',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 13),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 18,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0x29797979),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleLogout,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5C5C5C),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(
+                                          Color(0xFFFF4646)),
+                                ),
+                              )
+                            : Text(
+                                'my.logout'.tr(),
+                                style: const TextStyle(
+                                  color: Color(0xFFFF4646),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 52),
+                  ],
+                ),
+              );
+            }
+            return Padding(
+              padding:
+                  const EdgeInsets.only(left: 24.0, right: 24.0, top: 0),
+              child: Column(
             children: [
               // 상단 스와이프 가능한 콘텐츠 영역
               Expanded(
@@ -693,6 +790,8 @@ class _MyScreenState extends ConsumerState<MyScreen> {
               ),
             ],
           ),
+            );
+          },
         ),
       ),
     );

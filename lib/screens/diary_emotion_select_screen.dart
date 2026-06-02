@@ -48,7 +48,12 @@ class _DiaryEmotionSelectScreenState
     _selectedEmotion =
         widget.existingEntry?.emotionName ?? _emotionOrder.first;
     _cardMessageController.text = widget.existingEntry?.cardMessage ?? '';
-    _cardMessageController.addListener(() => setState(() {}));
+    _cardMessageController.addListener(_onCardMessageChanged);
+  }
+
+  void _onCardMessageChanged() {
+    if (!mounted) return;
+    setState(() {});
 
     final initialIndex =
         _virtualBase + _emotionOrder.indexOf(_selectedEmotion!);
@@ -62,6 +67,7 @@ class _DiaryEmotionSelectScreenState
   @override
   void dispose() {
     _cardController.dispose();
+    _cardMessageController.removeListener(_onCardMessageChanged);
     _cardMessageController.dispose();
     super.dispose();
   }
