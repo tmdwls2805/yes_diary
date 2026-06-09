@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/core/services/widget/widget_sync_service.dart';
 import 'package:yes_diary/services/database_service.dart';
 import 'package:yes_diary/screens/splash_screen.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
@@ -48,8 +50,28 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    HomeWidget.setAppGroupId(WidgetSyncService.appGroupId);
+    HomeWidget.initiallyLaunchedFromHomeWidget().then(_handleWidgetLaunch);
+    HomeWidget.widgetClicked.listen(_handleWidgetLaunch);
+  }
+
+  Future<void> _handleWidgetLaunch(Uri? uri) async {
+    if (uri == null) return;
+    if (uri.host == 'offwork' || uri.path.contains('offwork')) {
+      await WidgetSyncService.markOffWorkToday();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

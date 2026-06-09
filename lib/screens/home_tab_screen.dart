@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:yes_diary/core/services/storage/secure_storage_service.dart';
+import 'package:yes_diary/core/services/widget/widget_sync_service.dart';
 
 enum TimeState {
   workTime, // 근무 시간
@@ -92,6 +93,23 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen>
             const TimeOfDay(hour: 18, minute: 0),
       );
     });
+    await WidgetSyncService.syncWorkSchedule(
+      startTime: profile['startTime'],
+      endTime: profile['endTime'],
+    );
+
+    // 위젯에서 퇴근 처리한 게 있으면 앱 쪽에도 반영
+    final widgetOffDate = await WidgetSyncService.readOffWorkDate();
+    if (widgetOffDate != null && widgetOffDate.isNotEmpty) {
+      final todayKey = _bedTimeDateKey(DateTime.now());
+      if (widgetOffDate == todayKey) {
+        final savedKey = await SecureStorageService().getHomeBedTimeDate();
+        if (savedKey != todayKey) {
+          await SecureStorageService().saveHomeBedTimeDate(todayKey);
+        }
+      }
+    }
+
     await _refreshTimeState();
   }
 
@@ -201,6 +219,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen>
     await SecureStorageService().saveHomeBedTimeDate(
       _bedTimeDateKey(DateTime.now()),
     );
+    await WidgetSyncService.markOffWorkToday();
     if (!mounted) return;
     setState(() {
       currentTimeState = TimeState.bedTime;

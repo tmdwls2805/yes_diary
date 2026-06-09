@@ -196,7 +196,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           errorMessage = 'iOS Bundle ID 설정 오류\n\n'
               '카카오 개발자 콘솔에서 다음을 확인해주세요:\n'
               '1. 플랫폼 설정 > iOS\n'
-              '2. Bundle ID: com.example.yesDiary\n\n'
+              '2. Bundle ID: com.jjcompany.yesdiary\n\n'
               '등록되어 있는지 확인해주세요.';
         } else if (error.toString().contains('서버 오류: 500')) {
           errorMessage = '서버 오류가 발생했습니다.\n\n'

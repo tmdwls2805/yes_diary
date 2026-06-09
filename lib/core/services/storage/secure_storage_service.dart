@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:yes_diary/core/constants/storage_keys.dart';
+import 'package:yes_diary/core/services/widget/widget_sync_service.dart';
 
 class SecureStorageService {
   static const String _databaseName = 'diary_v4.db';
@@ -71,6 +72,10 @@ class SecureStorageService {
     await _storage.write(key: StorageKeys.onboardingEndTime, value: endTime);
     await _storage.write(key: StorageKeys.onboardingEmotion, value: emotion);
     await _storage.write(key: StorageKeys.onboardingCompleted, value: 'true');
+    await WidgetSyncService.syncWorkSchedule(
+      startTime: startTime,
+      endTime: endTime,
+    );
   }
 
   Future<bool> isOnboardingCompleted() async {
