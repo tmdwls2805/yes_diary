@@ -428,7 +428,7 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           builder: (context, snapshot) {
             final isLoggedIn = snapshot.data ?? false;
             if (isLoggedIn) {
-              return Padding(
+              return SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,11 +476,76 @@ class _MyScreenState extends ConsumerState<MyScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
+                            const SizedBox(height: 44),
+                            GestureDetector(
+                              onTap: () {},
+                              child: const Text(
+                                '정보 및 약관',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Pretendard',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Column(
+                              children: [
+                                _buildInfoMenuItem('계정 정보', onTap: () {}),
+                                _buildInfoMenuItem('이용약관', onTap: () {}),
+                                _buildInfoMenuItem('개인정보처리방침', onTap: () {}),
+                                _buildInfoMenuItem('버전정보', onTap: () {}, trailing: 'v1.0'),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            const SizedBox(height: 26),
+                            GestureDetector(
+                              onTap: () {},
+                              child: const Text(
+                                '공지사항 및 문의',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Pretendard',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Column(
+                              children: [
+                                _buildInfoMenuItem('공지사항', onTap: () {}),
+                                _buildInfoMenuItem('1:1 문의', onTap: () {}),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            const SizedBox(height: 26),
+                            GestureDetector(
+                              onTap: () {},
+                              child: const Text(
+                                '앗 네! 응원',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Pretendard',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Column(
+                              children: [
+                                _buildInfoMenuItem('개발자 응원하기', onTap: () {}),
+                                _buildInfoMenuItem('의견보내기', onTap: () {}),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
                           ],
                         );
                       },
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,
                       height: 52,
@@ -792,6 +857,48 @@ class _MyScreenState extends ConsumerState<MyScreen> {
           ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoMenuItem(String title, {required VoidCallback onTap, String? trailing}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Color(0x5CFFFFFF),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Pretendard',
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            if (trailing != null)
+              Text(
+                trailing,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Pretendard',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+          ],
         ),
       ),
     );
