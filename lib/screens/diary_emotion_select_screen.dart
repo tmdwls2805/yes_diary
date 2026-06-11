@@ -39,14 +39,22 @@ class _DiaryEmotionSelectScreenState
   late final List<String> _emotionOrder;
   late final PageController _cardController;
   bool _syncingFromTap = false;
-  final TextEditingController _cardMessageController = TextEditingController();
+    final TextEditingController _cardMessageController = TextEditingController();
 
-  @override
-  void initState() {
+    @override
+    void initState() {
     super.initState();
     _emotionOrder = AppImages.emotionBlockImagePaths.keys.toList();
     _selectedEmotion =
         widget.existingEntry?.emotionName ?? _emotionOrder.first;
+
+    final initialIndex =
+        _virtualBase + _emotionOrder.indexOf(_selectedEmotion!);
+    _cardController = PageController(
+      viewportFraction: 0.72,
+      initialPage: initialIndex,
+    );
+
     _cardMessageController.text = widget.existingEntry?.cardMessage ?? '';
     _cardMessageController.addListener(_onCardMessageChanged);
   }
@@ -54,14 +62,6 @@ class _DiaryEmotionSelectScreenState
   void _onCardMessageChanged() {
     if (!mounted) return;
     setState(() {});
-
-    final initialIndex =
-        _virtualBase + _emotionOrder.indexOf(_selectedEmotion!);
-
-    _cardController = PageController(
-      viewportFraction: 0.72,
-      initialPage: initialIndex,
-    );
   }
 
   @override
